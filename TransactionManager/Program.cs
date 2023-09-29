@@ -1,4 +1,4 @@
-﻿namespace TransctionManager
+﻿namespace TransactionManager
 {
     internal class Program
     {

@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+service TransactionServ {
+	rpc Submit(SubmitRequest) returns (SubmitReply);
+	rpc Status(StatusRequest) returns (StatusReply);
+}
+
+message SubmitRequest {
+	string name = 1;
+	repeated string reads = 2;
+	repeated string keys = 3;
+	repeated int32 values = 4;
+}
+
+message SubmitReply {
+	repeated string keys = 1;
+	repeated int32 values = 2;
+}
+
+message StatusRequest {
+}
+
+message StatusReply {
+	bool state = 1;
+}
