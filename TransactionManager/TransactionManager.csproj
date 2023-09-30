@@ -15,7 +15,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <Protobuf Include="proto\TransactionServices.proto" GrpcServices="Server" />
+    <Protobuf Include="proto\TransactionServerServices.proto" GrpcServices="Server" />
   </ItemGroup>
 
 </Project>

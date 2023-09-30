@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-service TransactionServ {
+service TransactionServices {
 	rpc Submit(SubmitRequest) returns (SubmitReply);
 	rpc Status(StatusRequest) returns (StatusReply);
 }
