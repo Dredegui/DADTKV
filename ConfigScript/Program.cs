@@ -10,9 +10,10 @@ namespace ConfigScript
     {
         static string PATH = Process.GetCurrentProcess().MainModule.FileName;
         static string SOLUTION_PATH = getSolutionPath();
-        static string TM_PATH = SOLUTION_PATH + "\\TransactionManager\\bin\\Debug\\net6.0\\TransactionManager.exe";
-        static string CLI_PATH = SOLUTION_PATH + "\\Client\\bin\\Debug\\net6.0\\Client.exe";
-        static string LM_PATH = SOLUTION_PATH + "\\LeaseManager\\bin\\Debug\\net6.0\\LeaseManager.exe";
+        static string INTER_PATH = "\\bin\\Debug\\net6.0";
+        static string TM_PATH = SOLUTION_PATH + "\\TransactionManager" + INTER_PATH + "\\TransactionManager.exe";
+        static string CLI_PATH = SOLUTION_PATH + "\\Client" + INTER_PATH + "\\Client.exe";
+        static string LM_PATH = SOLUTION_PATH + "\\LeaseManager" + INTER_PATH +  "\\LeaseManager.exe";
         
         public static Tuple<string,string> splitStr(string str)
         {
