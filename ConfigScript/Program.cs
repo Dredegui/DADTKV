@@ -173,8 +173,9 @@ namespace ConfigScript
             {
                 Process.Start(CLI_PATH, cli_names_run[i] + " " + cli_scripts_run[i] + " " + num_tm.ToString() + "  "+ tm_hosts);
                 Thread.Sleep(500);
-                return;
+                break;
             }
+            while (true);
             // TODO : INCOMPLETO 
         }
     }

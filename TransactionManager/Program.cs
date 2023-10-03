@@ -31,7 +31,7 @@ namespace TransactionManager
             int num_tm = Int32.Parse(args[2 + num_lm + 1]);
             List<string> names_tm = new List<string>();
             List<string> urls_tm = new List<string>();
-            List<int> types = new List<int> { 0 };
+            List<int> types = new List<int> { 0, 0 };
             for (int i = 0; i < num_tm; i++)
             {
                 
@@ -66,6 +66,7 @@ namespace TransactionManager
             Console.WriteLine(startupMessage);
             //Configuring HTTP for client connections in Register method
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            int c = 0;
             while (true) ;
 
         }

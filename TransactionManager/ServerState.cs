@@ -28,5 +28,13 @@ namespace TransactionManager
         public string GetName() {
             return name;
         }
+
+        public void printState()
+        {
+            foreach (var kvp in DadInts) {
+                Console.WriteLine("Key: " + kvp.Key + "| Val: " + kvp.Value);
+            }
+
+        }
     }
 }
