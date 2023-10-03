@@ -36,9 +36,8 @@
             values.Clear();
             client.TxSubmit(reads, keys, values);
 
-            while (true) { }
-            //ClientLoop CLI = new ClientLoop(@"..\..\..\scriptsCLI\DADTKV_client_script_sample.txt");
-            //CLI.Loop();
+            ClientLoop CLI = new ClientLoop(@"..\..\..\..\Client\scriptsCLI\DADTKV_client_script_sample.txt");
+            CLI.Loop();
         }
     }
 }
