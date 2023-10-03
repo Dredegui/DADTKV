@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Xml.Schema;
 using System.Text.RegularExpressions;
+using System.Collections;
 
 namespace ConfigScript
 {
@@ -14,6 +15,24 @@ namespace ConfigScript
         static readonly string TM_PATH = SOLUTION_PATH + "\\TransactionManager" + INTER_PATH + "\\TransactionManager.exe";
         static readonly string CLI_PATH = SOLUTION_PATH + "\\Client" + INTER_PATH + "\\Client.exe";
         static readonly string LM_PATH = SOLUTION_PATH + "\\LeaseManager" + INTER_PATH +  "\\LeaseManager.exe";
+
+        static string tm_names;
+        static string lm_names;
+        static List<string> tm_names_run = new List<string>();
+        static List<string> lm_names_run = new List<string>();
+
+        static string tm_hosts;
+        static string lm_hosts;
+        static List<string> tm_hosts_run = new List<string>();
+        static List<string> lm_hosts_run = new List<string>();
+
+        static List<string> cli_names_run = new List<string>();
+        static List<string> cli_scripts_run = new List<string>();
+
+        static int num_lm;
+        static int num_tm;
+        static int num_cli;
+
         
         public static Tuple<string,string> splitStr(string str)
         {
@@ -55,22 +74,27 @@ namespace ConfigScript
             string PDcp = split.Item1;
             string inp = split.Item2;
 
-            string path_exe = null;
             if (PDcp == "T")
             {
-                path_exe = TM_PATH;
+                tm_names += " " + name;
+                tm_hosts += " " + inp;
+                tm_names_run.Add(name);
+                tm_hosts_run.Add(inp);
+                num_tm++;
             }
             if (PDcp == "L")
             {
-                path_exe = LM_PATH;
+                lm_names += " " + name;
+                lm_hosts += " " + inp;
+                lm_names_run.Add(name);
+                lm_hosts_run.Add(inp);
+                num_lm++;
             }
             if (PDcp == "C")
             {
-                path_exe = CLI_PATH;
-            }
-            if (path_exe != null)
-            {
-                Process.Start(path_exe, name + " " + inp);
+                cli_names_run.Add(name);
+                cli_scripts_run.Add(inp);
+                num_cli++;
             }
         }
 
@@ -130,6 +154,25 @@ namespace ConfigScript
                 {
                     lineBehaviour(line);
                 }
+            }
+
+            // Create LM
+            for (int i = 0; i < num_lm;i++)
+            {
+                Process.Start(LM_PATH, lm_names_run[i] + " " + lm_hosts_run[i]);
+            }
+            Thread.Sleep(1000);
+            // Create TM 
+            for (int i = 0; i < num_tm;i++)
+            {
+                Process.Start(TM_PATH, tm_names_run[i] + " " + tm_hosts_run[i] + " " + num_lm.ToString() + " "+ lm_hosts);
+            }
+            Thread.Sleep(1000);
+            // Create CLI
+            for (int i = 0; i < num_cli; i++)
+            {
+                Process.Start(CLI_PATH, cli_names_run[i] + " " + cli_scripts_run[i] + " " + num_tm.ToString() + "  "+ tm_hosts);
+                Thread.Sleep(500);
             }
         }
     }

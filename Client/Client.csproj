@@ -17,4 +17,8 @@
 	<Protobuf Include="proto\TransactionServerServices.proto" GrpcServices="Client" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="scriptsCLI\" />
+  </ItemGroup>
+
 </Project>
