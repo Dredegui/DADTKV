@@ -26,8 +26,7 @@ namespace TransactionManager
             // Write operation
             List<string> keys = message.Keys.ToList();
             List<int> values = message.Values.ToList();
-            int i = 0;
-            while (i < keys.Count)
+            for (int i = 0; i < keys.Count; i++)
             {
                 state.SetValue(keys[i], values[i]);
             }

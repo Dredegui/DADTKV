@@ -13,11 +13,18 @@ namespace TransactionManager
         private ServerState state;
         private Dictionary<string, BroadcastServices.BroadcastServicesClient> stubs = new Dictionary<string, BroadcastServices.BroadcastServicesClient> ();
         private int transcationId;
+        private int counter = 0;
+        private List<string> names;
+        private List<string> urls;
+        private List<int> types;
 
-        public ClientServicesImpl(ServerState state)
+        public ClientServicesImpl(ServerState state, List<string> names, List<string> urls, List<int> types)
         {
             this.state = state;
             transcationId = 0;
+            this.names = names;
+            this.urls = urls;
+            this.types = types;
         }
 
         public override Task<SubmitReply> Submit(SubmitRequest request, ServerCallContext context)
@@ -25,7 +32,7 @@ namespace TransactionManager
             return Task.FromResult(TxSubmit(request));
         }
 
-        public void registerStubs(List<string> names, List<string> urls, List<int> types)
+        public void registerStubs()
         {
             for (int i = 0; i < names.Count; i++)
             {
@@ -44,6 +51,13 @@ namespace TransactionManager
 
         public SubmitReply TxSubmit(SubmitRequest request)
         {
+            Console.WriteLine("Start submit");
+            if (counter == 0)
+            {
+                this.registerStubs();
+                counter++;
+            }
+            Console.WriteLine("Registed stubs");
             // TODO Check leases, run paxos if there is no lease
             // Execution of the transaction
             // Read operation
@@ -56,11 +70,11 @@ namespace TransactionManager
             // Write operation
             List<string> keys= request.Keys.ToList();
             List<int> values = request.Values.ToList();
-            int i = 0;
-            while (i < keys.Count)
+            for (int i = 0;i < keys.Count;i++)
             {
                 state.SetValue(keys[i], values[i]);
             }
+            Console.WriteLine("Changed values");
             BroadcastMessage message = new BroadcastMessage();
             message.Id = transcationId;
             message.Name = state.GetName();
@@ -72,6 +86,7 @@ namespace TransactionManager
 
                 stub.Broadcast(message); // TODO async?
             }
+            Console.WriteLine("Broadcasted");
             SubmitReply reply = new SubmitReply();
             reply.Keys.AddRange(reads);
             reply.Values.AddRange(results);

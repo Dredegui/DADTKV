@@ -8,12 +8,12 @@ namespace ConfigScript
 {
     public class Program
     {
-        static string PATH = Process.GetCurrentProcess().MainModule.FileName;
-        static string SOLUTION_PATH = getSolutionPath();
-        static string INTER_PATH = "\\bin\\Debug\\net6.0";
-        static string TM_PATH = SOLUTION_PATH + "\\TransactionManager" + INTER_PATH + "\\TransactionManager.exe";
-        static string CLI_PATH = SOLUTION_PATH + "\\Client" + INTER_PATH + "\\Client.exe";
-        static string LM_PATH = SOLUTION_PATH + "\\LeaseManager" + INTER_PATH +  "\\LeaseManager.exe";
+        static readonly string PATH = Process.GetCurrentProcess().MainModule.FileName;
+        static readonly string SOLUTION_PATH = getSolutionPath();
+        static readonly string INTER_PATH = "\\bin\\Debug\\net6.0";
+        static readonly string TM_PATH = SOLUTION_PATH + "\\TransactionManager" + INTER_PATH + "\\TransactionManager.exe";
+        static readonly string CLI_PATH = SOLUTION_PATH + "\\Client" + INTER_PATH + "\\Client.exe";
+        static readonly string LM_PATH = SOLUTION_PATH + "\\LeaseManager" + INTER_PATH +  "\\LeaseManager.exe";
         
         public static Tuple<string,string> splitStr(string str)
         {
