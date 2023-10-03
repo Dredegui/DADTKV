@@ -159,21 +159,23 @@ namespace ConfigScript
             // Create LM
             for (int i = 0; i < num_lm;i++)
             {
-                Process.Start(LM_PATH, lm_names_run[i] + " " + lm_hosts_run[i]);
+                Process.Start(LM_PATH, lm_names_run[i] + " " + lm_hosts_run[i] + " " + num_lm.ToString() + " " + lm_hosts);
             }
             Thread.Sleep(1000);
             // Create TM 
             for (int i = 0; i < num_tm;i++)
             {
-                Process.Start(TM_PATH, tm_names_run[i] + " " + tm_hosts_run[i] + " " + num_lm.ToString() + " "+ lm_hosts);
+                Process.Start(TM_PATH, tm_names_run[i] + " " + tm_hosts_run[i] + " " + num_lm.ToString() + " "+ lm_hosts + " " + num_tm.ToString() + " " + tm_hosts);
+                Thread.Sleep(500);
             }
-            Thread.Sleep(1000);
             // Create CLI
             for (int i = 0; i < num_cli; i++)
             {
                 Process.Start(CLI_PATH, cli_names_run[i] + " " + cli_scripts_run[i] + " " + num_tm.ToString() + "  "+ tm_hosts);
                 Thread.Sleep(500);
+                return;
             }
+            // TODO : INCOMPLETO 
         }
     }
 }

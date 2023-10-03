@@ -4,36 +4,56 @@ namespace TransactionManager
 {
     internal class Program
     {
+
+        private static int getPort(string hostname)
+        {
+            return Int32.Parse(hostname.Split(':')[2]);
+        }
         static void Main(string[] args)
         {
-            string hostname = "localhost";
-            Console.WriteLine("Input name:");
-            string name = Console.ReadLine();
-            Console.WriteLine("Input port:");
-            int port = int.Parse(Console.ReadLine());
-            List<string> names;
-            List<string> urls;
-            List<int> types;
+
+            string name = args[0];
+            string hostname = args[1];
+            string LOCALHOST = "localhost";
+            int port = getPort(hostname);
+
+            // Initialize LM he knows about
+            int num_lm = Int32.Parse(args[2]);
+            List<string> names_lm = new List<string>();
+            List<string> urls_lm = new List<string>();
+            for (int i = 0; i < num_lm; i++)
+            {
+                names_lm.Add("lm" + i.ToString());
+                urls_lm.Add(args[3 + i]);
+            }
+
+            // Initialize TM he knows about
+            int num_tm = Int32.Parse(args[2 + num_lm + 1]);
+            List<string> names_tm = new List<string>();
+            List<string> urls_tm = new List<string>();
+            List<int> types = new List<int> { 0 };
+            for (int i = 0; i < num_tm; i++)
+            {
+                
+                int port_tm = getPort(args[3 + num_lm + 1 + i]);
+                if (port_tm != port)
+                {
+                    names_tm.Add("tm" + i.ToString());
+                    urls_tm.Add("http://localhost:" + port_tm.ToString());
+                    Console.WriteLine("[TM] connected to: " + "http://localhost:" + port_tm.ToString());
+                }
+            }
+
             string startupMessage;
             ServerPort serverPort;
 
-            if (name == "tm1") {
-                names = new List<string> { "tm2" };
-                urls = new List<string> { "http://localhost:5002" };
-                types = new List<int> { 0 };
-            }
-            else
-            {
-                names = new List<string> { "tm1" };
-                urls = new List<string> { "http://localhost:5001" };
-                types = new List<int> { 0 };
-            }
+
             ServerState serverState = new ServerState(name);
-            serverPort = new ServerPort(hostname, port, ServerCredentials.Insecure);
+            serverPort = new ServerPort(LOCALHOST, port, ServerCredentials.Insecure);
             startupMessage = "Insecure ChatServer server listening on port " + port;
 
             BroadcastServicesImpl brdImpl = new BroadcastServicesImpl(serverState);
-            ClientServicesImpl cltImpl = new ClientServicesImpl(serverState, names, urls, types);
+            ClientServicesImpl cltImpl = new ClientServicesImpl(serverState, names_tm, urls_tm, types);
             
             Server server = new Server
             {

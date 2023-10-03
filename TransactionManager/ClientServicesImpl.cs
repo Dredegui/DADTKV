@@ -36,10 +36,13 @@ namespace TransactionManager
         {
             for (int i = 0; i < names.Count; i++)
             {
+                Console.WriteLine(names.Count + " < OLHA AQUI >  URL: " + urls[i] + " NOME: " + names[i]);
                 GrpcChannel channel = GrpcChannel.ForAddress(urls[i]);
+
                 if (types[i] == 0)
                 {
                     stubs[names[i]] = new BroadcastServices.BroadcastServicesClient(channel);
+                    Console.WriteLine("========");
                 }
                 else
                 {
@@ -47,6 +50,7 @@ namespace TransactionManager
                 }
 
             }
+            Console.WriteLine("Helloooo????");
         }
 
         public SubmitReply TxSubmit(SubmitRequest request)
