@@ -4,15 +4,6 @@
     {
         static void Main(string[] args)
         {
-
-            Console.WriteLine("[CLI] Client start");
-
-            for (int i = 0; i < args.Length; i++)
-            {
-                Console.WriteLine(args[i]);
-            }
-            return;
-
             Console.WriteLine("Client Start");
             List<string> tms = new List<string> {"tm1", "tm2"};
             List<string> urls = new List<string> {"http://localhost:5001", "http://localhost:5002"};
