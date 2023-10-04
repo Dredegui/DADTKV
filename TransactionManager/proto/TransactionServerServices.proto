@@ -14,7 +14,7 @@ message SubmitRequest {
 
 message SubmitReply {
 	repeated string keys = 1;
-	repeated int32 values = 2;
+	repeated string values = 2;
 }
 
 message StatusRequest {

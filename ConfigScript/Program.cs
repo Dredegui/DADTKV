@@ -171,9 +171,8 @@ namespace ConfigScript
             // Create CLI
             for (int i = 0; i < num_cli; i++)
             {
-                Process.Start(CLI_PATH, cli_names_run[i] + " " + cli_scripts_run[i] + " " + num_tm.ToString() + "  "+ tm_hosts);
+                Process.Start(CLI_PATH, cli_names_run[i] + " " + cli_scripts_run[i] + " " + i%num_tm + " " + num_tm.ToString() + "  "+ tm_hosts);
                 Thread.Sleep(500);
-                break;
             }
             while (true);
             // TODO : INCOMPLETO 

@@ -16,13 +16,14 @@ namespace TransactionManager
             this.name = name;
         }
 
-        public int GetValue(string key)
+        public bool ValidKey(string key)
         {
-            if (DadInts.ContainsKey(key))
-            {
-                return DadInts[key];
-            }
-            return -1;
+            return DadInts.ContainsKey(key);
+        }
+
+        public string GetValue(string key)
+        {
+            return "" + DadInts[key];
         }
 
         public void SetValue(string key, int value) {

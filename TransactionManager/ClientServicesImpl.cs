@@ -63,10 +63,16 @@ namespace TransactionManager
             // Execution of the transaction
             // Read operation
             List<string> reads = request.Reads.ToList();
-            List<int> results = new List<int>();
+            List<string> results = new List<string>();
             foreach (string read in reads)
             {
-                results.Add(state.GetValue(read));
+                if (state.ValidKey(read))
+                {
+                    results.Add(state.GetValue(read));
+                } else
+                {
+                    results.Add("unknown DadInt");
+                }
             }
             // Write operation
             List<string> keys= request.Keys.ToList();

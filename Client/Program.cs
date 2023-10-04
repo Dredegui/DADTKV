@@ -14,22 +14,22 @@
             
             string name = args[0];
             string script_name = args[1];
-
+            int chosen_tm = Int32.Parse(args[2]);
             // GET Tms
-            int num_tm = Int32.Parse(args[2]);
+            int num_tm = Int32.Parse(args[3]);
             List<string> tms = new List<string>();
             List<string> urls = new List<string>();
             for (int i = 0; i < num_tm; i++)
             {
                 tms.Add("NO_NAME_YET");
-                int port = getPort(args[3 + i]);
+                int port = getPort(args[4 + i]);
                 Console.WriteLine("[CLI] http://localhost:" + port.ToString());
                 urls.Add("http://localhost:" + port.ToString());
             }
 
             Console.WriteLine("Client Start");
 
-            ClientLogic client = new ClientLogic(name, 0, tms, urls);
+            ClientLogic client = new ClientLogic(name, chosen_tm, tms, urls);
             ClientLoop CLI = new ClientLoop(RELATIVE_PATH + "DADTKV_client_script_sample.txt",client);
             CLI.Loop();
         }
