@@ -2,6 +2,9 @@
 {
     internal class Program
     {
+
+        private static string RELATIVE_PATH = @"..\..\..\..\Client\scriptsCLI\";
+
         private static int getPort(string hostname)
         {
             return Int32.Parse(hostname.Split(':')[2]);
@@ -27,16 +30,7 @@
             Console.WriteLine("Client Start");
 
             ClientLogic client = new ClientLogic(name, 0, tms, urls);
-            List<string> reads = new List<string>();
-            List<string> keys = new List<string> {"balance1", "balance2"};
-            List<int> values = new List<int> {40, 10};
-            client.TxSubmit(reads, keys, values);
-            reads.Add("balance1");
-            keys.Clear();
-            values.Clear();
-            client.TxSubmit(reads, keys, values);
-
-            ClientLoop CLI = new ClientLoop(@"..\..\..\..\Client\scriptsCLI\DADTKV_client_script_sample.txt");
+            ClientLoop CLI = new ClientLoop(RELATIVE_PATH + "DADTKV_client_script_sample.txt",client);
             CLI.Loop();
         }
     }

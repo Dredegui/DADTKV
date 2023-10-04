@@ -18,7 +18,11 @@ namespace TransactionManager
 
         public int GetValue(string key)
         {
-            return DadInts[key];
+            if (DadInts.ContainsKey(key))
+            {
+                return DadInts[key];
+            }
+            return -1;
         }
 
         public void SetValue(string key, int value) {
