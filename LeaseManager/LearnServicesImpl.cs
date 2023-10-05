@@ -9,22 +9,41 @@ namespace LeaseManager
 {
     internal class LearnServicesImpl : LearnServices.LearnServicesBase
     {
-        LeaseState state = new LeaseState();
-        public LearnServicesImpl() { }
+        LeaseState state;
+        public LearnServicesImpl(LeaseState state) {
+            this.state = state;
+        }
 
         public override Task<LearnReply> Learn(LearnRequest request, ServerCallContext context)
         {
-            return Task.FromResult(GetLearn(request));
+            return Task.FromResult(LearnImpl(request));
         }
 
-        public LearnReply GetLearn(LearnRequest request)
+        public LearnReply LearnImpl(LearnRequest request)
         {
-            // recebe epoch atual
+            // Save current epoch
             int curr_epoch = state.GetEpoch();
-            // loop a espera do proximo
-            while (state.GetEpoch() != curr_epoch + 1 && state.Updated());
-            // buscar current_leases e devolver
-            LearnReply reply = null;
+            // If false the case is epoch x and accepted x-1
+            if (state.Updated(curr_epoch)) // If epoch x and accepted x, wait for epoch x+1 to completed
+            {
+                curr_epoch += 1;
+            }
+            // Build proposed
+            string tm = request.Tm;
+            List<string> proposedLeases = request.Leases.ToList();
+            state.AddProposedLeases(tm, proposedLeases);
+            // Wait for the next consensus | TODO Sleep 
+            while (state.Updated(curr_epoch));
+            List<LeaseTransaction> consensusOrder = state.GetCurrentLeases();
+            LearnReply reply = new LearnReply();
+            foreach (LeaseTransaction lt in consensusOrder)
+            {
+                LearnRequest interRequest = new LearnRequest();
+                interRequest.Tm = lt.tm;
+                interRequest.Leases.AddRange(lt.leases);
+                reply.Values.Add(interRequest);
+            }
+            state.ClearProposed(); // TODO REVIEW
             return reply;
         }
 

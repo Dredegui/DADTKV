@@ -15,14 +15,14 @@ message PrepareRequest {
 }
 
 message PrepareReply{
-	bool accept = 1;
+	bool promise = 1;
 	int32 accepted_round = 2;
 	repeated Request values = 3;
 }
 
 message AcceptRequest {
 	int32 proposed_round = 1;
-	repeated string leases = 2;
+	repeated Request values = 2;
 }
 
 message AcceptReply {
