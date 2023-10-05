@@ -4,7 +4,8 @@
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("[LM] Hello, World!");
+            while (true) ;
         }
     }
 }
+

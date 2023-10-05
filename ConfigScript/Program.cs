@@ -159,7 +159,7 @@ namespace ConfigScript
             // Create LM
             for (int i = 0; i < num_lm;i++)
             {
-                Process.Start(LM_PATH, lm_names_run[i] + " " + lm_hosts_run[i] + " " + num_lm.ToString() + " " + lm_hosts);
+                Process.Start(LM_PATH, i + " " + lm_names_run[i] + " " + lm_hosts_run[i] + " " + num_lm.ToString() + " " + lm_hosts);
             }
             Thread.Sleep(1000);
             // Create TM 

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+service LearnServices {
+	rpc Learn(LearnRequest ) returns (LearnReply);
+}
+
+message LearnRequest {
+	string tm = 1;
+	repeated string leases = 2;
+}
+
+message LearnReply{
+	repeated LearnRequest values = 1;
+}
+
+

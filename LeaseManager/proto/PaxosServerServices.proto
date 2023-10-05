@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+service PaxosConsensusServices {
+	rpc Prepare(PrepareRequest) returns (PrepareReply);
+	rpc Accept(AcceptRequest) returns (AcceptReply);
+}
+
+message Request {
+	string tm = 1;
+	repeated string leases = 2;
+}
+
+message PrepareRequest {
+	int32 proposed_round = 1;
+}
+
+message PrepareReply{
+	bool accept = 1;
+	int32 accepted_round = 2;
+	repeated Request values = 3;
+}
+
+message AcceptRequest {
+	int32 proposed_round = 1;
+	repeated string leases = 2;
+}
+
+message AcceptReply {
+	bool accepted = 1;
+}
+
