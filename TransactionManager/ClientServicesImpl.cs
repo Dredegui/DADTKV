@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.Serialization.Formatters;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -60,6 +61,37 @@ namespace TransactionManager
             return !reads.Except(leases).Any() && !keys.Except(leases).Any();
         }
 
+        public bool checkCollision(List<string> myLeases, List<string> otherLeases)
+        {
+            return myLeases.Intersect(otherLeases).Any();
+        }
+
+        public List<int> getWaitingQueue(LearnReply result)
+        {
+            List<int> ret = new List<int>();
+
+            foreach(LearnRequest req in result.Values) 
+            {
+                if (req.Tm != state.GetName())
+                {
+                    if (checkCollision(leases,req.Leases.ToList()))
+                    {
+                        ret.Add(0);
+                    }
+                    else
+                    {
+                        ret.Add(1);
+                    }
+                }
+                else
+                {
+                    ret.Add(1);
+                }
+            }
+
+            return ret;
+        }
+
         public async Task<SubmitReply> TxSubmit(SubmitRequest request)
         {
             Console.WriteLine("Start submit");
@@ -74,6 +106,7 @@ namespace TransactionManager
             List<string> keys = request.Keys.ToList();
             List<int> values = request.Values.ToList();
             List<string> results = new List<string>();
+
             if (!checkLeases(reads, keys))
             {
                 LearnRequest learnRequest = new LearnRequest();
@@ -83,14 +116,36 @@ namespace TransactionManager
                 foreach (LearnServices.LearnServicesClient stub in stubsLM.Values)
                 {
                     learnAwaitList.Add(stub.LearnAsync(learnRequest).ResponseAsync);
-                    // Use prepare reply info 
                 }
                 await Task.WhenAll(learnAwaitList);
-                List<LearnReply> learnResults = learnAwaitList.Select(reply => reply.Result).ToList();
+                LearnReply learnResult = learnAwaitList.Select(reply => reply.Result).ToList()[0];
+
+                // save our leases TODO Ver com stor (libertar sempre)
+                leases = new List<string>();
+                foreach (LearnRequest tmL in learnResult.Values)
+                {
+                    if (tmL.Tm == state.GetName())
+                    {
+                        leases.AddRange(tmL.Leases.ToList());
+                    }
+                }
+
+                List<int> queue = getWaitingQueue(learnResult);
+
+
+                while (queue.Count > 0)
+                {
+                    // Esperar mensagens?
+                    // TODO : meter um sleep? 
+                }
+
             }
-            // Check leases
-            // Execution of the transaction
-            // Read operation
+
+            
+
+            
+
+
             foreach (string read in reads)
             {
                 if (state.ValidKey(read))
