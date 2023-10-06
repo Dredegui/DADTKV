@@ -2,6 +2,7 @@
 using Grpc.Net.Client;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,7 +12,9 @@ namespace TransactionManager
     public class ClientServicesImpl : TransactionServices.TransactionServicesBase
     {
         private ServerState state;
-        private Dictionary<string, BroadcastServices.BroadcastServicesClient> stubs = new Dictionary<string, BroadcastServices.BroadcastServicesClient> ();
+        private Dictionary<string, BroadcastServices.BroadcastServicesClient> stubsTM = new Dictionary<string, BroadcastServices.BroadcastServicesClient> ();
+        private Dictionary<string, LearnServices.LearnServicesClient> stubsLM = new Dictionary<string, LearnServices.LearnServicesClient> ();
+        private List<string> leases = new List<string> ();
         private int transcationId;
         private int counter = 0;
         private List<string> names;
@@ -29,7 +32,7 @@ namespace TransactionManager
 
         public override Task<SubmitReply> Submit(SubmitRequest request, ServerCallContext context)
         {
-            return Task.FromResult(TxSubmit(request));
+            return TxSubmit(request);
         }
 
         public void registerStubs()
@@ -40,17 +43,24 @@ namespace TransactionManager
 
                 if (types[i] == 0)
                 {
-                    stubs[names[i]] = new BroadcastServices.BroadcastServicesClient(channel);
+                    // Transaction Managers stub
+                    stubsTM[names[i]] = new BroadcastServices.BroadcastServicesClient(channel);
                 }
                 else
                 {
-                    // Lease stub
+                    // Lease Managers stub
+                    stubsLM[names[i]] = new LearnServices.LearnServicesClient(channel);
                 }
 
             }
         }
 
-        public SubmitReply TxSubmit(SubmitRequest request)
+
+        public bool checkLeases(List<string> reads, List<string> keys) {
+            return !reads.Except(leases).Any() && !keys.Except(leases).Any();
+        }
+
+        public async Task<SubmitReply> TxSubmit(SubmitRequest request)
         {
             Console.WriteLine("Start submit");
             if (counter == 0)
@@ -59,11 +69,28 @@ namespace TransactionManager
                 counter++;
             }
             Console.WriteLine("Registed stubs");
-            // TODO Check leases, run paxos if there is no lease
+            // Initialization
+            List<string> reads = request.Reads.ToList();
+            List<string> keys = request.Keys.ToList();
+            List<int> values = request.Values.ToList();
+            List<string> results = new List<string>();
+            if (!checkLeases(reads, keys))
+            {
+                LearnRequest learnRequest = new LearnRequest();
+                learnRequest.Tm = state.GetName();
+                learnRequest.Leases.AddRange(reads.Concat(keys).Distinct());
+                List<Task<LearnReply>> learnAwaitList = new List<Task<LearnReply>>();
+                foreach (LearnServices.LearnServicesClient stub in stubsLM.Values)
+                {
+                    learnAwaitList.Add(stub.LearnAsync(learnRequest).ResponseAsync);
+                    // Use prepare reply info 
+                }
+                await Task.WhenAll(learnAwaitList);
+                List<LearnReply> learnResults = learnAwaitList.Select(reply => reply.Result).ToList();
+            }
+            // Check leases
             // Execution of the transaction
             // Read operation
-            List<string> reads = request.Reads.ToList();
-            List<string> results = new List<string>();
             foreach (string read in reads)
             {
                 if (state.ValidKey(read))
@@ -75,8 +102,7 @@ namespace TransactionManager
                 }
             }
             // Write operation
-            List<string> keys= request.Keys.ToList();
-            List<int> values = request.Values.ToList();
+            
             for (int i = 0;i < keys.Count;i++)
             {
                 state.SetValue(keys[i], values[i]);
@@ -88,7 +114,7 @@ namespace TransactionManager
             message.Keys.AddRange(keys);
             message.Values.AddRange(values);
             transcationId++;
-            foreach (var stub in stubs.Values)
+            foreach (var stub in stubsTM.Values)
             {
 
                 stub.Broadcast(message); // TODO async?

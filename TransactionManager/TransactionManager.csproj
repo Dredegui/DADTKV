@@ -17,6 +17,7 @@
 	</PackageReference>
 	<Protobuf Include="proto\TransactionServerServices.proto" GrpcServices="Server" />
 	<Protobuf Include="proto\BroadcastServerServices.proto" GrpcServices="Both" />
+	<Protobuf Include="proto\PaxosLearnServices.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>
