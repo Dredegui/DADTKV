@@ -61,35 +61,36 @@ namespace TransactionManager
             return !reads.Except(leases).Any() && !keys.Except(leases).Any();
         }
 
-        public bool checkCollision(List<string> myLeases, List<string> otherLeases)
+        public void buildQueue(LearnReply reply)
         {
-            return myLeases.Intersect(otherLeases).Any();
+            foreach (LearnRequest lr in reply.Values)
+            {
+                foreach (string lease in lr.Leases)
+                {
+                    state.queue[lease].Add(lr.Tm);
+                }
+            }
         }
 
-        public List<int> getWaitingQueue(LearnReply result)
+        public bool checkQueue(List<string> reads, List<string> keys)
         {
-            List<int> ret = new List<int>();
-
-            foreach(LearnRequest req in result.Values) 
+            foreach (string read in reads)
             {
-                if (req.Tm != state.GetName())
+                if (state.queue[read][0] != state.GetName())
                 {
-                    if (checkCollision(leases,req.Leases.ToList()))
-                    {
-                        ret.Add(0);
-                    }
-                    else
-                    {
-                        ret.Add(1);
-                    }
-                }
-                else
-                {
-                    ret.Add(1);
+                    return false;
                 }
             }
 
-            return ret;
+            foreach (string key in keys)
+            {
+                if (state.queue[key][0] != state.GetName())
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public async Task<SubmitReply> TxSubmit(SubmitRequest request)
@@ -106,62 +107,59 @@ namespace TransactionManager
             List<string> keys = request.Keys.ToList();
             List<int> values = request.Values.ToList();
             List<string> results = new List<string>();
-
             if (!checkLeases(reads, keys))
             {
                 LearnRequest learnRequest = new LearnRequest();
-                learnRequest.Tm = state.GetName();
+                lock (state)
+                {
+                    learnRequest.Tm = state.GetName();
+                }
                 learnRequest.Leases.AddRange(reads.Concat(keys).Distinct());
                 List<Task<LearnReply>> learnAwaitList = new List<Task<LearnReply>>();
                 foreach (LearnServices.LearnServicesClient stub in stubsLM.Values)
                 {
                     learnAwaitList.Add(stub.LearnAsync(learnRequest).ResponseAsync);
                 }
-                await Task.WhenAll(learnAwaitList);
-                LearnReply learnResult = learnAwaitList.Select(reply => reply.Result).ToList()[0];
+                LearnReply[] learnResults = await Task.WhenAll(learnAwaitList);
+                LearnReply learnResult = learnResults[0];
 
                 // save our leases TODO Ver com stor (libertar sempre)
                 leases = new List<string>();
-                foreach (LearnRequest tmL in learnResult.Values)
+
+                buildQueue(learnResult);
+
+                while (checkQueue(reads, keys))
                 {
-                    if (tmL.Tm == state.GetName())
+                    lock (state)
                     {
-                        leases.AddRange(tmL.Leases.ToList());
+                        Monitor.Wait(state);
                     }
                 }
 
-                List<int> queue = getWaitingQueue(learnResult);
-
-
-                while (queue.Count > 0)
-                {
-                    // Esperar mensagens?
-                    // TODO : meter um sleep? 
-                }
-
             }
-
-            
-
-            
-
-
-            foreach (string read in reads)
+            lock (state)
             {
-                if (state.ValidKey(read))
+                foreach (string read in reads)
                 {
-                    results.Add(state.GetValue(read));
-                } else
+                    if (state.ValidKey(read))
+                    {
+                        results.Add(state.GetValue(read));
+                        state.queue[read].RemoveAt(0);
+                    }
+                    else
+                    {
+                        results.Add("unknown DadInt");
+                    }
+                }
+                // Write operation
+
+                for (int i = 0; i < keys.Count; i++)
                 {
-                    results.Add("unknown DadInt");
+                    state.SetValue(keys[i], values[i]);
+                    state.queue[keys[i]].RemoveAt(0);
                 }
             }
-            // Write operation
-            
-            for (int i = 0;i < keys.Count;i++)
-            {
-                state.SetValue(keys[i], values[i]);
-            }
+
             Console.WriteLine("Changed values");
             BroadcastMessage message = new BroadcastMessage();
             message.Id = transcationId;

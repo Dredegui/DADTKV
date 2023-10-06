@@ -9,6 +9,9 @@ namespace TransactionManager
     public class ServerState
     {
         private Dictionary<string, int> DadInts = new Dictionary<string, int>();
+
+        public Dictionary<string, List<string>> queue = new Dictionary<string, List<string>>();
+
         private string name;
 
         public ServerState(string name)

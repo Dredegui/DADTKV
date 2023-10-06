@@ -114,6 +114,7 @@ namespace LeaseManager
                 }
                 if (id == 0) {
                     StartPaxos();
+                    Monitor.PulseAll(state);
                     state.Accept();
                 }
                 state.NextEpoch();

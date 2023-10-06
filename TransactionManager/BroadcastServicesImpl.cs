@@ -30,6 +30,7 @@ namespace TransactionManager
             {
                 state.SetValue(keys[i], values[i]);
             }
+            Monitor.PulseAll(state);
             BroadcastAck ack = new BroadcastAck();
             ack.Value = true;
             return ack;

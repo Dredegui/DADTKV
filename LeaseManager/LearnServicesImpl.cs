@@ -21,20 +21,17 @@ namespace LeaseManager
 
         public LearnReply LearnImpl(LearnRequest request)
         {
-            // Save current epoch
-            int curr_epoch = state.GetEpoch();
-            // If false the case is epoch x and accepted x-1
-            if (state.Updated(curr_epoch)) // If epoch x and accepted x, wait for epoch x+1 to completed
-            {
-                curr_epoch += 1;
-            }
             // Build proposed
             string tm = request.Tm;
             List<string> proposedLeases = request.Leases.ToList();
             state.AddProposedLeases(tm, proposedLeases);
             // Wait for the next consensus | TODO Sleep 
-            while (state.Updated(curr_epoch));
-            List<LeaseTransaction> consensusOrder = state.GetCurrentLeases();
+            List<LeaseTransaction> consensusOrder;
+            lock (state)
+            {
+                Monitor.Wait(state);
+                consensusOrder = state.GetCurrentLeases();
+            }
             LearnReply reply = new LearnReply();
             foreach (LeaseTransaction lt in consensusOrder)
             {
