@@ -21,6 +21,7 @@ namespace LeaseManager
 
         public LearnReply LearnImpl(LearnRequest request)
         {
+            Console.WriteLine("LEARN SERVER SIDE");
             // Build proposed
             string tm = request.Tm;
             List<string> proposedLeases = request.Leases.ToList();
@@ -43,6 +44,19 @@ namespace LeaseManager
             state.ClearProposed(); // TODO REVIEW
             return reply;
         }
+
+        public override Task<TestReply> Test(TestRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(TestImpl(request));
+        }
+        public TestReply TestImpl(TestRequest request)
+        {
+            Console.WriteLine(request.Sent);
+            TestReply reply = new TestReply();
+            reply.Ack = true;
+            return reply;
+        }
+
 
     }
 }

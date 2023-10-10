@@ -2,6 +2,7 @@ syntax = "proto3";
 
 service LearnServices {
 	rpc Learn(LearnRequest ) returns (LearnReply);
+	rpc Test(TestRequest) returns (TestReply);
 }
 
 message LearnRequest {
@@ -11,6 +12,14 @@ message LearnRequest {
 
 message LearnReply{
 	repeated LearnRequest values = 1;
+}
+
+message TestRequest {
+	bool Sent = 1;
+}
+
+message TestReply{
+	bool Ack = 1;
 }
 
 

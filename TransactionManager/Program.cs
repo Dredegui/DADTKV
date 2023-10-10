@@ -21,17 +21,18 @@ namespace TransactionManager
             int num_lm = Int32.Parse(args[2]);
             List<string> names_lm = new List<string>();
             List<string> urls_lm = new List<string>();
+            List<int> types = new List<int>();
             for (int i = 0; i < num_lm; i++)
             {
                 names_lm.Add("lm" + i.ToString());
                 urls_lm.Add(args[3 + i]);
+                types.Add(1);
             }
 
             // Initialize TM he knows about
             int num_tm = Int32.Parse(args[2 + num_lm + 1]);
             List<string> names_tm = new List<string>();
             List<string> urls_tm = new List<string>();
-            List<int> types = new List<int> { 0, 0 };
             for (int i = 0; i < num_tm; i++)
             {
                 
@@ -41,6 +42,7 @@ namespace TransactionManager
                     names_tm.Add("tm" + i.ToString());
                     urls_tm.Add("http://localhost:" + port_tm.ToString());
                     Console.WriteLine("[TM] connected to: " + "http://localhost:" + port_tm.ToString());
+                    types.Add(0);
                 }
             }
 
@@ -53,7 +55,7 @@ namespace TransactionManager
             startupMessage = "Insecure ChatServer server listening on port " + port;
 
             BroadcastServicesImpl brdImpl = new BroadcastServicesImpl(serverState);
-            ClientServicesImpl cltImpl = new ClientServicesImpl(serverState, names_tm, urls_tm, types);
+            ClientServicesImpl cltImpl = new ClientServicesImpl(serverState, names_lm.Concat(names_tm).ToList(), urls_lm.Concat(urls_tm).ToList(), types);
             
             Server server = new Server
             {
@@ -66,7 +68,6 @@ namespace TransactionManager
             Console.WriteLine(startupMessage);
             //Configuring HTTP for client connections in Register method
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            int c = 0;
             while (true) ;
 
         }

@@ -51,7 +51,7 @@ namespace LeaseManager
                 // Use prepare reply info 
             }
             await Task.WhenAll(replyAwaitList);
-            List<PrepareReply> replyResults = replyAwaitList.Select(reply => reply.Result).ToList();
+            List<PrepareReply> replyResults = replyAwaitList.Select(reply => reply.Result).ToList(); // TODO AWAIT?
             foreach (PrepareReply reply in replyResults)
             {
                 if (reply.Promise)
@@ -102,7 +102,7 @@ namespace LeaseManager
             }
         }
 
-        public void Loop()
+        public async void Loop()
         {
             int i = 0;
             while (i < numSlots)
