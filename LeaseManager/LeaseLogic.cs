@@ -32,6 +32,7 @@ namespace LeaseManager
 
         public void registerStubs()
         {
+            Console.WriteLine("[LM] REGISTERING NEW STUBS => Num lm:" + numLM + " || Names count: " + names.Count);
             for (int i = 0; i < names.Count; i++)
             {
                 GrpcChannel channel = GrpcChannel.ForAddress(urls[i]);
@@ -52,9 +53,15 @@ namespace LeaseManager
                 replyAwaitList.Add(stubs[name].PrepareAsync(replyRequest).ResponseAsync);
                 // Use prepare reply info 
             }
-            Console.WriteLine("[LM LEADER] Waiting for every prepare reply //TODO: Await?");
-            await Task.WhenAll(replyAwaitList);
-            List<PrepareReply> replyResults = replyAwaitList.Select(reply => reply.Result).ToList(); // TODO AWAIT?
+            Console.WriteLine("[LM LEADER] Waiting for every prepare reply => Waiting for every LM");
+
+            Task<PrepareReply[]> waitTask = Task.WhenAll(replyAwaitList);
+            await waitTask;
+            Console.WriteLine("[LM LEADER] Waited for every process with sucess");
+            PrepareReply[] prepareResults = waitTask.Result;
+            List<PrepareReply> replyResults = prepareResults.ToList();
+            //await Task.WhenAll(replyAwaitList);
+            //List<PrepareReply> replyResults = replyAwaitList.Select(reply => reply.Result).ToList();
             foreach (PrepareReply reply in replyResults)
             {
                 Console.WriteLine("[LM LEADER] Check if we have the majoraty");
