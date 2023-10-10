@@ -41,33 +41,38 @@ namespace LeaseManager
 
         public async void StartPaxos()
         {
+            Console.WriteLine("[LM LEADER] Building prepare request");
             PrepareRequest replyRequest = new PrepareRequest();
             replyRequest.ProposedRound = state.GetEpoch();
             int counter = 0;
             List<Task<PrepareReply>> replyAwaitList = new List<Task<PrepareReply>>();
             foreach (string name in names)
             {
+                Console.WriteLine("[LM LEADER] Sending async PREPARE REQUESTS for every LM");
                 replyAwaitList.Add(stubs[name].PrepareAsync(replyRequest).ResponseAsync);
                 // Use prepare reply info 
             }
+            Console.WriteLine("[LM LEADER] Waiting for every prepare reply //TODO: Await?");
             await Task.WhenAll(replyAwaitList);
             List<PrepareReply> replyResults = replyAwaitList.Select(reply => reply.Result).ToList(); // TODO AWAIT?
             foreach (PrepareReply reply in replyResults)
             {
+                Console.WriteLine("[LM LEADER] Check if we have the majoraty");
                 if (reply.Promise)
                 {
                     counter++;
                 }
             }
-            Console.WriteLine("Id: " + id + "Counter: " + counter + " | Number of lms: " + numLM);
+            Console.WriteLine("[LM LEADER] Id: " + id + "Counter: " + counter + " | Number of lms: " + numLM);
             if (counter / numLM > 0.5)
             {
-                Console.WriteLine("Id: " + id + " | HAS MAJORITY");
+                Console.WriteLine("[LM LEADER] Id: " + id + " | HAS MAJORITY => Start accept request");
                 // Start accept requests
                 // Build request
                 AcceptRequest acceptRequest = new AcceptRequest();
                 acceptRequest.ProposedRound = state.GetEpoch();
                 List<LeaseTransaction> commitedOrder = state.GetProposedLeases();
+                Console.WriteLine("[LM LEADER] Building the accepted list for other LMs");
                 foreach (LeaseTransaction lt in commitedOrder)
                 {
                     Request request = new Request();
@@ -75,6 +80,7 @@ namespace LeaseManager
                     request.Leases.AddRange(lt.leases);
                     acceptRequest.Values.Add(request);
                 }
+                Console.WriteLine("[LM LEADER] Sending the accepted list for other LM");
                 // Build response await list
                 List<Task<AcceptReply>> acceptAwaitList = new List<Task<AcceptReply>>();
                 foreach (string name in names)
@@ -82,7 +88,10 @@ namespace LeaseManager
                     acceptAwaitList.Add(stubs[name].AcceptAsync(acceptRequest).ResponseAsync);
                     // Use prepare reply info 
                 }
+
+                Console.WriteLine("[LM LEADER] Waiting for every LM to accept my accepted list");
                 await Task.WhenAll(acceptAwaitList);
+                Console.WriteLine("[LM LEADER] Every one responded => Let's check every one accepted");
                 List<AcceptReply> acceptResults = acceptAwaitList.Select(reply => reply.Result).ToList();
                 // Count all the acks
                 counter = 0;
@@ -95,10 +104,19 @@ namespace LeaseManager
                 }
                 if (counter == numLM) // TODO Can be different
                 {
+                    Console.WriteLine("[LM LEADER] They accepted my accept request, everything is OK");
                     state.ClearCurrentLeases();
                     state.AcceptLeases(commitedOrder);
                 }
+                else
+                {
+                    Console.WriteLine("[LM LEADER] Not everyone accepted my accept request //TODO: Ainda não resolvemos isto");
+                }
                 // TODO Else where the majority didn't accept and it need to retry
+            }
+            else
+            {
+                Console.WriteLine("[LM LEADER] Don't have the majoraty //TODO: Ainda não resolvemos este caso");
             }
         }
 
@@ -111,8 +129,10 @@ namespace LeaseManager
                 if (i == 0)
                 {
                     registerStubs();
+                    Console.WriteLine("[LM] Register other LM stubs - Its the first time we are doing this so...");
                 }
                 if (id == 0) {
+                    Console.WriteLine("[LM] I am the leader of this: Let's start PAXOS");
                     StartPaxos();
                     Monitor.PulseAll(state);
                     state.Accept();

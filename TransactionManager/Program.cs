@@ -28,6 +28,7 @@ namespace TransactionManager
                 int port_lm = getPort(args[3 + i]);
                 names_lm.Add("lm" + i.ToString());
                 urls_lm.Add("http://localhost:" + port_lm.ToString());
+                Console.WriteLine("[TM] connected to another LM: " + "http://localhost:" + port_lm.ToString());
                 types.Add(1);
             }
 
@@ -43,7 +44,7 @@ namespace TransactionManager
                 {
                     names_tm.Add("tm" + i.ToString());
                     urls_tm.Add("http://localhost:" + port_tm.ToString());
-                    Console.WriteLine("[TM] connected to: " + "http://localhost:" + port_tm.ToString());
+                    Console.WriteLine("[TM] connected to another TM: " + "http://localhost:" + port_tm.ToString());
                     types.Add(0);
                 }
             }
@@ -65,9 +66,9 @@ namespace TransactionManager
                 Ports = { serverPort }
             };
 
+            
             server.Start();
-
-            Console.WriteLine(startupMessage);
+            Console.WriteLine("[TM] Started tm services server || " + startupMessage);
             //Configuring HTTP for client connections in Register method
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
             while (true) ;

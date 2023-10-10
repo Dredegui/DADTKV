@@ -40,7 +40,7 @@ namespace TransactionManager
         public void printState()
         {
             foreach (var kvp in DadInts) {
-                Console.WriteLine("Key: " + kvp.Key + "| Val: " + kvp.Value);
+                Console.WriteLine("[TM] INTERNAL STATE >> Key: " + kvp.Key + "| Val: " + kvp.Value);
             }
 
         }

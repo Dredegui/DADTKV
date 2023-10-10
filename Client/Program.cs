@@ -23,11 +23,11 @@
             {
                 tms.Add("NO_NAME_YET");
                 int port = getPort(args[4 + i]);
-                Console.WriteLine("[CLI] http://localhost:" + port.ToString());
+                Console.WriteLine("[CLI] New connection with TM http://localhost:" + port.ToString());
                 urls.Add("http://localhost:" + port.ToString());
             }
 
-            Console.WriteLine("Client Start");
+            Console.WriteLine("[CLI] Started to run a client");
 
             ClientLogic client = new ClientLogic(name, chosen_tm, tms, urls);
             ClientLoop CLI = new ClientLoop(RELATIVE_PATH + "DADTKV_client_script_sample.txt",client);

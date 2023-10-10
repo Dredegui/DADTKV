@@ -95,47 +95,56 @@ namespace TransactionManager
 
         public async Task<SubmitReply> TxSubmit(SubmitRequest request)
         {
-            Console.WriteLine("Start submit");
+            Console.WriteLine("[TM] Start a submit request");
             if (counter == 0)
             {
                 Console.WriteLine("");
                 this.registerStubs();
+                Console.WriteLine("[TM] Registed stubs for another TM and LM");
                 counter++;
             }
-            Console.WriteLine("Registed stubs");
+            
             // Initialization
             List<string> reads = request.Reads.ToList();
             List<string> keys = request.Keys.ToList();
             List<int> values = request.Values.ToList();
             List<string> results = new List<string>();
             if (!checkLeases(reads, keys))
-            {
+            { 
+                Console.WriteLine("[TM] Dont have the Lease for the request of the client => Build new request for LM");
                 LearnRequest learnRequest = new LearnRequest();
                 learnRequest.Tm = state.GetName();
                 learnRequest.Leases.AddRange(reads.Concat(keys).Distinct());
                 List<Task<LearnReply>> learnAwaitList = new List<Task<LearnReply>>();
                 foreach (LearnServices.LearnServicesClient stub in stubsLM.Values)
                 {
+                    Console.WriteLine("[TM]         >>>> Sendind request for a LM");
                     learnAwaitList.Add(stub.LearnAsync(learnRequest).ResponseAsync);
                 }
+                Console.WriteLine("[TM] Waiting for every LM to respond");
                 Task<LearnReply[]> waitTask = Task.WhenAll(learnAwaitList);
                 await waitTask;
+                Console.WriteLine("[TM] Waited for every LM with sucess");
                 LearnReply[] learnResults = waitTask.Result;
                 LearnReply learnResult = learnResults[0];
-                Console.WriteLine("MID LEARN AFTER EXTRACT");
+
 
                 // save our leases TODO Ver com stor (libertar sempre)
+                Console.WriteLine("[TM] Reset previous Leases //TODO: Dont do this");
                 leases = new List<string>();
 
+                Console.WriteLine("[TM] Building the queue to respect LMs");
                 buildQueue(learnResult);
 
                 while (checkQueue(reads, keys))
                 {
+                    Console.WriteLine("[TM] Its not my turn yet so I will sleep until it is");
                     lock (state)
                     {
                         Monitor.Wait(state);
                     }
                 }
+                Console.WriteLine("[TM] It's my turn on the queue so I will do the read and write operations");
 
             }
             lock (state)
@@ -152,6 +161,7 @@ namespace TransactionManager
                         results.Add("unknown DadInt");
                     }
                 }
+                Console.WriteLine("[TM] Read operations done with sucess: Build response for the client");
                 // Write operation
 
                 for (int i = 0; i < keys.Count; i++)
@@ -159,9 +169,10 @@ namespace TransactionManager
                     state.SetValue(keys[i], values[i]);
                     state.queue[keys[i]].RemoveAt(0);
                 }
+                Console.WriteLine("[TM] Write operation done with success: Changed values");
             }
 
-            Console.WriteLine("Changed values");
+            
             BroadcastMessage message = new BroadcastMessage();
             message.Id = transcationId;
             message.Name = state.GetName();
@@ -173,7 +184,7 @@ namespace TransactionManager
 
                 stub.Broadcast(message); // TODO async?
             }
-            Console.WriteLine("Broadcasted");
+            Console.WriteLine("[TM] Broadcasted request for another TMs in order to replicate the state");
             SubmitReply reply = new SubmitReply();
             reply.Keys.AddRange(reads);
             reply.Values.AddRange(results);

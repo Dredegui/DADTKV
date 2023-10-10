@@ -28,15 +28,13 @@ namespace Client
         }
         public void TxSubmit(List<string> reads, List<string> keys, List<int> values)
         {
-            Console.WriteLine("Make submit");
             SubmitRequest request = new SubmitRequest();
             request.Name = name;
             request.Reads.AddRange(reads);
             request.Keys.AddRange(keys);
             request.Values.AddRange(values);
             SubmitReply reply = stub.Submit(request);
-            Console.WriteLine("Reply:");
-            Console.WriteLine(reply.ToString());
+            Console.WriteLine("[CLI] Received a transaction response with sucess: " + reply.ToString);
         }
     }
 }

@@ -31,6 +31,7 @@ namespace TransactionManager
                 state.SetValue(keys[i], values[i]);
             }
             Monitor.PulseAll(state);
+            Console.WriteLine("[TM] My service is completed: Pinging other TM that might be waiting for the queue");
             BroadcastAck ack = new BroadcastAck();
             ack.Value = true;
             return ack;

@@ -21,7 +21,7 @@ namespace LeaseManager
 
         public LearnReply LearnImpl(LearnRequest request)
         {
-            Console.WriteLine("LEARN SERVER SIDE");
+            Console.WriteLine("[LM] Received a Learn Request from a TM");
             // Build proposed
             string tm = request.Tm;
             List<string> proposedLeases = request.Leases.ToList();

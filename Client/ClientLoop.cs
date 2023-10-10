@@ -95,6 +95,7 @@ namespace Client
 
         private void NewTransaction(string line)
         {
+            Console.WriteLine("[CLI] Starting a new transaction");
             List<List<string>> req = split_reads_and_write(line);
             List<int> values = new List<int>();
             int size_values = req[2].Count;
@@ -104,7 +105,7 @@ namespace Client
             {
                 values.Add(Int32.Parse(req[2][i]));
             }
-
+            Console.WriteLine("[CLI] Requesting new transaction for TM server");
             client.TxSubmit(req[0], req[1], values);
         }
         private void CheckStatus()
