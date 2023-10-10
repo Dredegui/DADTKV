@@ -24,8 +24,10 @@ namespace TransactionManager
             List<int> types = new List<int>();
             for (int i = 0; i < num_lm; i++)
             {
+
+                int port_lm = getPort(args[3 + i]);
                 names_lm.Add("lm" + i.ToString());
-                urls_lm.Add(args[3 + i]);
+                urls_lm.Add("http://localhost:" + port_lm.ToString());
                 types.Add(1);
             }
 

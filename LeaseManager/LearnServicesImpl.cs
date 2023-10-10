@@ -45,18 +45,5 @@ namespace LeaseManager
             return reply;
         }
 
-        public override Task<TestReply> Test(TestRequest request, ServerCallContext context)
-        {
-            return Task.FromResult(TestImpl(request));
-        }
-        public TestReply TestImpl(TestRequest request)
-        {
-            Console.WriteLine(request.Sent);
-            TestReply reply = new TestReply();
-            reply.Ack = true;
-            return reply;
-        }
-
-
     }
 }

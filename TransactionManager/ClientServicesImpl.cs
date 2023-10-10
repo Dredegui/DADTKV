@@ -113,22 +113,14 @@ namespace TransactionManager
                 LearnRequest learnRequest = new LearnRequest();
                 learnRequest.Tm = state.GetName();
                 learnRequest.Leases.AddRange(reads.Concat(keys).Distinct());
-                LearnServices.LearnServicesClient specStub = stubsLM["lm0"];
-                TestRequest testRequest = new TestRequest();
-                testRequest.Sent = true;
-                TestReply rep = specStub.Test(testRequest);
-                Console.WriteLine(rep.Ack);
                 List<Task<LearnReply>> learnAwaitList = new List<Task<LearnReply>>();
                 foreach (LearnServices.LearnServicesClient stub in stubsLM.Values)
                 {
                     learnAwaitList.Add(stub.LearnAsync(learnRequest).ResponseAsync);
                 }
-                Console.WriteLine("MID LEARN BEFORE AWAIT");
                 Task<LearnReply[]> waitTask = Task.WhenAll(learnAwaitList);
                 await waitTask;
-                Console.WriteLine("MID LEARN AFTER AWAIT");
                 LearnReply[] learnResults = waitTask.Result;
-                Console.WriteLine("MID LEARN AFTER RESULT");
                 LearnReply learnResult = learnResults[0];
                 Console.WriteLine("MID LEARN AFTER EXTRACT");
 
