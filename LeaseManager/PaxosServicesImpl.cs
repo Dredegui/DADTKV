@@ -25,6 +25,7 @@ namespace LeaseManager
         {
             Console.WriteLine("[LM LEARNER] Received a accept request => Check if the the round I promided is the new proposed");
             AcceptReply reply = new AcceptReply();
+            Console.WriteLine("[ACCEPT ROUND] proposed: " + request.ProposedRound + " | promisedRound: " + promisedRound);
             if (request.ProposedRound == promisedRound) {
                 reply.Accepted = true;
                 state.ClearCurrentLeases();
@@ -52,6 +53,7 @@ namespace LeaseManager
 
         public PrepareReply PrepareImpl(PrepareRequest request)
         {
+            Console.WriteLine("[ACCEPT ROUND] proposed: " + request.ProposedRound + " | promisedRound: " + promisedRound);
             Console.WriteLine("[LM LEANER] Received a prepare request");
             PrepareReply reply = new PrepareReply();
             if (request.ProposedRound > promisedRound)

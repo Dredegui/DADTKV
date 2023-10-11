@@ -44,12 +44,13 @@ namespace LeaseManager
         {
             Console.WriteLine("[LM LEADER] Building prepare request");
             PrepareRequest replyRequest = new PrepareRequest();
-            replyRequest.ProposedRound = state.GetEpoch();
+            int currentEpoch = state.GetEpoch();
+            replyRequest.ProposedRound = currentEpoch;
             int counter = 0;
             List<Task<PrepareReply>> replyAwaitList = new List<Task<PrepareReply>>();
             foreach (string name in names)
             {
-                Console.WriteLine("[LM LEADER] Sending async PREPARE REQUESTS for every LM");
+                Console.WriteLine("[LM LEADER] Sending async PREPARE REQUESTS for every LM " + name);
                 replyAwaitList.Add(stubs[name].PrepareAsync(replyRequest).ResponseAsync);
                 // Use prepare reply info 
             }
@@ -71,13 +72,14 @@ namespace LeaseManager
                 }
             }
             Console.WriteLine("[LM LEADER] Id: " + id + "Counter: " + counter + " | Number of lms: " + numLM);
-            if (counter / numLM > 0.5)
+            float floatCheck= counter / (numLM + 0.0F);
+            if (floatCheck > 0.5)
             {
                 Console.WriteLine("[LM LEADER] Id: " + id + " | HAS MAJORITY => Start accept request");
                 // Start accept requests
                 // Build request
                 AcceptRequest acceptRequest = new AcceptRequest();
-                acceptRequest.ProposedRound = state.GetEpoch();
+                acceptRequest.ProposedRound = currentEpoch;
                 List<LeaseTransaction> commitedOrder = state.GetProposedLeases();
                 Console.WriteLine("[LM LEADER] Building the accepted list for other LMs");
                 foreach (LeaseTransaction lt in commitedOrder)
@@ -109,7 +111,7 @@ namespace LeaseManager
                         counter++;
                     }
                 }
-                if (counter == numLM) // TODO Can be different
+                if (counter == numLM - 1) // TODO Can be different
                 {
                     Console.WriteLine("[LM LEADER] They accepted my accept request, everything is OK");
                     state.ClearCurrentLeases();
@@ -141,10 +143,16 @@ namespace LeaseManager
                 if (id == 0) {
                     Console.WriteLine("[LM] I am the leader of this: Let's start PAXOS");
                     StartPaxos();
-                    Monitor.PulseAll(state);
+                    lock(state)
+                    {
+                        Monitor.PulseAll(state);
+                    }
                     state.Accept();
                 }
-                state.NextEpoch();
+                lock (state)
+                {
+                    state.NextEpoch();
+                }
                 i++;
             }
         }
