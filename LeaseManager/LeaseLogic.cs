@@ -12,18 +12,21 @@ namespace LeaseManager
     internal class LeaseLogic
     {
         private LeaseState state;
-        private Dictionary<string, PaxosConsensusServices.PaxosConsensusServicesClient> stubs = new Dictionary<string, PaxosConsensusServices.PaxosConsensusServicesClient>();
-        List<string> urls;
-        List<string> names;
+        private Dictionary<string, PaxosConsensusServices.PaxosConsensusServicesClient> stubsLM = new Dictionary<string, PaxosConsensusServices.PaxosConsensusServicesClient>();
+        
+        private List<string> urls;
+        private List<string> names;
+        private List<int> types;
         private int numLM;
         private int id;
         private int numSlots;
 
 
-        public LeaseLogic(LeaseState state, List<string> urls, List<string> names, int numLM, int id, int numSlots)
+        public LeaseLogic(LeaseState state, List<string> urls, List<string> names, List<int> types, int numLM, int id, int numSlots)
         {
             this.state = state;
             this.urls = urls;
+            this.types = types;
             this.names = names;
             this.numLM = numLM;
             this.id = id;
@@ -36,8 +39,16 @@ namespace LeaseManager
             for (int i = 0; i < names.Count; i++)
             {
                 GrpcChannel channel = GrpcChannel.ForAddress(urls[i]);
-                stubs[names[i]] = new PaxosConsensusServices.PaxosConsensusServicesClient(channel);
+                if (types[i] == 0)
+                {
+                    stubsLM[names[i]] = new PaxosConsensusServices.PaxosConsensusServicesClient(channel);
+                }
+                else
+                {
+                    state.stubsTM[names[i]] = new LeaseInformServices.LeaseInformServicesClient(channel);
+                }
             }
+            Console.WriteLine("End register");
         }
 
         public async void StartPaxos()
@@ -48,10 +59,10 @@ namespace LeaseManager
             replyRequest.ProposedRound = currentEpoch;
             int counter = 0;
             List<Task<PrepareReply>> replyAwaitList = new List<Task<PrepareReply>>();
-            foreach (string name in names)
+            foreach (string name in stubsLM.Keys)
             {
                 Console.WriteLine("[LM LEADER] Sending async PREPARE REQUESTS for every LM " + name);
-                replyAwaitList.Add(stubs[name].PrepareAsync(replyRequest).ResponseAsync);
+                replyAwaitList.Add(stubsLM[name].PrepareAsync(replyRequest).ResponseAsync);
                 // Use prepare reply info 
             }
             Console.WriteLine("[LM LEADER] Waiting for every prepare reply => Waiting for every LM");
@@ -61,8 +72,6 @@ namespace LeaseManager
             Console.WriteLine("[LM LEADER] Waited for every process with sucess");
             PrepareReply[] prepareResults = waitTask.Result;
             List<PrepareReply> replyResults = prepareResults.ToList();
-            //await Task.WhenAll(replyAwaitList);
-            //List<PrepareReply> replyResults = replyAwaitList.Select(reply => reply.Result).ToList();
             foreach (PrepareReply reply in replyResults)
             {
                 Console.WriteLine("[LM LEADER] Check if we have the majoraty");
@@ -92,9 +101,9 @@ namespace LeaseManager
                 Console.WriteLine("[LM LEADER] Sending the accepted list for other LM");
                 // Build response await list
                 List<Task<AcceptReply>> acceptAwaitList = new List<Task<AcceptReply>>();
-                foreach (string name in names)
+                foreach (string name in stubsLM.Keys)
                 {
-                    acceptAwaitList.Add(stubs[name].AcceptAsync(acceptRequest).ResponseAsync);
+                    acceptAwaitList.Add(stubsLM[name].AcceptAsync(acceptRequest).ResponseAsync);
                     // Use prepare reply info 
                 }
 
@@ -114,8 +123,19 @@ namespace LeaseManager
                 if (counter == numLM - 1) // TODO Can be different
                 {
                     Console.WriteLine("[LM LEADER] They accepted my accept request, everything is OK");
-                    state.ClearCurrentLeases();
-                    state.AcceptLeases(commitedOrder);
+                    lock (state)
+                    {
+                        state.ClearCurrentLeases();
+                        state.Accept();
+                        state.AcceptLeases(commitedOrder);
+                        CommitRequest request = new CommitRequest();
+                        request.Epoch = currentEpoch;
+                        foreach (var stub in stubsLM.Values)
+                        {
+                            stub.CommitAsync(request);
+                        }
+                        state.ClearProposed();
+                    }
                 }
                 else
                 {
@@ -143,11 +163,6 @@ namespace LeaseManager
                 if (id == 0) {
                     Console.WriteLine("[LM] I am the leader of this: Let's start PAXOS");
                     StartPaxos();
-                    lock(state)
-                    {
-                        Monitor.PulseAll(state);
-                    }
-                    state.Accept();
                 }
                 lock (state)
                 {

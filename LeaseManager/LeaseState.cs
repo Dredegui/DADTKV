@@ -14,6 +14,7 @@ namespace LeaseManager
         private int acceptedRound = -1;
         private List<LeaseTransaction> currentLeases = new List<LeaseTransaction>();
         private List<LeaseTransaction> proposedLeases = new List<LeaseTransaction>();
+        public Dictionary<string, LeaseInformServices.LeaseInformServicesClient> stubsTM = new Dictionary<string, LeaseInformServices.LeaseInformServicesClient>();
         public LeaseState()
         {
         }
@@ -35,10 +36,6 @@ namespace LeaseManager
         public int GetAcceptedRound()
         {
             return this.acceptedRound;
-        }
-
-        public bool Updated(int leaseEpoch) {
-            return leaseEpoch == acceptedRound;
         }
 
         public List<LeaseTransaction> GetCurrentLeases()

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,6 +18,34 @@ namespace LeaseManager
             this.state = state;
         }
 
+        public override Task<CommitReply> Commit(CommitRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(CommitImpl(request));
+        }
+
+        public CommitReply CommitImpl(CommitRequest commitRequest)
+        {
+            Console.WriteLine("[LM] Received a commit request");
+            List<LeaseTransaction> consensusOrder = state.GetCurrentLeases();
+            state.ClearProposed();
+            InformRequest request = new InformRequest();
+            request.Epoch = commitRequest.Epoch;
+            foreach (LeaseTransaction lt in consensusOrder)
+            {
+                Lease interRequest = new Lease();
+                interRequest.Tm = lt.tm;
+                interRequest.Leases.AddRange(lt.leases);
+                request.Values.Add(interRequest);
+            }
+            // broadcast consensus to tm's
+            foreach (LeaseInformServices.LeaseInformServicesClient stub in state.stubsTM.Values)
+            {
+                stub.BroadcastInformAsync(request);
+            }
+            CommitReply reply = new CommitReply();
+            return reply;
+        }
+
         public override Task<AcceptReply> Accept(AcceptRequest request, ServerCallContext context) {
             return Task.FromResult(AcceptImpl(request));
         }
@@ -26,22 +55,27 @@ namespace LeaseManager
             Console.WriteLine("[LM LEARNER] Received a accept request => Check if the the round I promided is the new proposed");
             AcceptReply reply = new AcceptReply();
             Console.WriteLine("[ACCEPT ROUND] proposed: " + request.ProposedRound + " | promisedRound: " + promisedRound);
-            if (request.ProposedRound == promisedRound) {
-                reply.Accepted = true;
-                state.ClearCurrentLeases();
-                List<LeaseTransaction> commitedOrder = new List<LeaseTransaction>();
-                List<Request> requests = request.Values.ToList();
-                foreach (Request req in  requests) {
-                    LeaseTransaction lt = new LeaseTransaction();
-                    lt.tm = req.Tm;
-                    lt.leases = req.Leases.ToList();
-                }
-                state.AcceptLeases(commitedOrder);
-                Console.WriteLine("[LM LEANER] It is so I will accept it");
-            } else
+            lock (state)
             {
-                Console.WriteLine("[LM LEANER] It is not => REJECT IT");
-                reply.Accepted = false;
+                if (request.ProposedRound == promisedRound) {
+                    reply.Accepted = true;
+                    state.ClearCurrentLeases();
+                    List<LeaseTransaction> commitedOrder = new List<LeaseTransaction>();
+                    List<Request> requests = request.Values.ToList();
+                    foreach (Request req in  requests) {
+                        LeaseTransaction lt = new LeaseTransaction();
+                        lt.tm = req.Tm;
+                        lt.leases = req.Leases.ToList();
+                        commitedOrder.Add(lt);
+                    }
+                    state.AcceptLeases(commitedOrder);
+                    Console.WriteLine("[LM LEANER] It is so I will accept it");
+                } else
+                {
+                    Console.WriteLine("[LM LEANER] It is not => REJECT IT");
+                    reply.Accepted = false;
+                }
+                Monitor.PulseAll(state);
             }
             return reply;
         }

@@ -3,6 +3,7 @@ syntax = "proto3";
 service PaxosConsensusServices {
 	rpc Prepare(PrepareRequest) returns (PrepareReply);
 	rpc Accept(AcceptRequest) returns (AcceptReply);
+	rpc Commit(CommitRequest) returns (CommitReply);
 }
 
 message Request {
@@ -27,6 +28,13 @@ message AcceptRequest {
 
 message AcceptReply {
 	bool accepted = 1;
+}
+
+message CommitRequest {
+	int32 epoch = 1;
+}
+
+message CommitReply {
 }
 
 

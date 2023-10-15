@@ -34,7 +34,13 @@ namespace Client
             request.Keys.AddRange(keys);
             request.Values.AddRange(values);
             SubmitReply reply = stub.Submit(request);
-            Console.WriteLine("[CLI] Received a transaction response with sucess: " + reply.ToString);
+            string replyToString = "";
+            for (int i = 0; i < reply.Keys.Count; i++)
+            {
+                replyToString += "[CLI RESULTS] " + reply.Keys[i] + ": " + reply.Values[i] + " |\n";
+
+            }
+            Console.WriteLine("[CLI] Received a transaction response with sucess:\n" + replyToString);
         }
     }
 }

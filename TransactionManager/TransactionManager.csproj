@@ -18,6 +18,7 @@
 	<Protobuf Include="proto\TransactionServerServices.proto" GrpcServices="Server" />
 	<Protobuf Include="proto\BroadcastServerServices.proto" GrpcServices="Both" />
 	<Protobuf Include="proto\PaxosLearnServices.proto" GrpcServices="Client" />
+	<Protobuf Include="proto\LeaseBroadcastServices.proto" GrpcServices="Server" />
   </ItemGroup>
 
 </Project>

@@ -10,5 +10,4 @@ message LearnRequest {
 }
 
 message LearnReply{
-	repeated LearnRequest values = 1;
 }

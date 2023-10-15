@@ -144,7 +144,7 @@ namespace ConfigScript
         {
             // OPEN CONFIG SCRIPT
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string relativePath = @"..\..\..\configFiles\configuration_sample.txt";
+            string relativePath = @"..\..\..\configFiles\config_script_1.txt";
             string filePath = Path.Combine(baseDirectory, relativePath);
 
             using (StreamReader reader = new StreamReader(filePath))
@@ -160,7 +160,7 @@ namespace ConfigScript
             for (int i = 0; i < num_lm;i++)
             {
                 Console.WriteLine("[CONFIG] LM started with sucess");
-                Process.Start(LM_PATH, i + " " + lm_names_run[i] + " " + lm_hosts_run[i] + " " + num_lm.ToString() + " " + lm_hosts);
+                Process.Start(LM_PATH, i + " " + lm_names_run[i] + " " + lm_hosts_run[i] + " " + num_lm.ToString() + " " + lm_hosts + " " + num_tm.ToString() + " " + tm_hosts);
             }
             Thread.Sleep(1000);
             // Create TM 

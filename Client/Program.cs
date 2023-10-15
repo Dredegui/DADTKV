@@ -30,7 +30,7 @@
             Console.WriteLine("[CLI] Started to run a client");
 
             ClientLogic client = new ClientLogic(name, chosen_tm, tms, urls);
-            ClientLoop CLI = new ClientLoop(RELATIVE_PATH + "DADTKV_client_script_sample.txt",client);
+            ClientLoop CLI = new ClientLoop(RELATIVE_PATH + script_name + ".txt",client);
             CLI.Loop();
         }
     }

@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+service LeaseInformServices{
+	rpc BroadcastInform(InformRequest) returns (InformReply);
+}
+
+message Lease {
+	string tm = 1;
+	repeated string leases = 2;
+}
+
+message InformRequest{
+	repeated Lease values = 1;
+	int32 epoch = 2;
+}
+
+message InformReply{
+}
+
+

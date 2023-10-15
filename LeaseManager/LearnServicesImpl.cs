@@ -26,22 +26,7 @@ namespace LeaseManager
             string tm = request.Tm;
             List<string> proposedLeases = request.Leases.ToList();
             state.AddProposedLeases(tm, proposedLeases);
-            // Wait for the next consensus | TODO Sleep 
-            List<LeaseTransaction> consensusOrder;
-            lock (state)
-            {
-                Monitor.Wait(state);
-                consensusOrder = state.GetCurrentLeases();
-            }
             LearnReply reply = new LearnReply();
-            foreach (LeaseTransaction lt in consensusOrder)
-            {
-                LearnRequest interRequest = new LearnRequest();
-                interRequest.Tm = lt.tm;
-                interRequest.Leases.AddRange(lt.leases);
-                reply.Values.Add(interRequest);
-            }
-            state.ClearProposed(); // TODO REVIEW
             return reply;
         }
 

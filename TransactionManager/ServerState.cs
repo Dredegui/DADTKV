@@ -11,6 +11,7 @@ namespace TransactionManager
         private Dictionary<string, int> DadInts = new Dictionary<string, int>();
 
         public Dictionary<string, List<string>> queue = new Dictionary<string, List<string>>();
+        public int epoch = -1;
 
         private string name;
 

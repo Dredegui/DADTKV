@@ -58,11 +58,12 @@ namespace TransactionManager
             startupMessage = "Insecure ChatServer server listening on port " + port;
 
             BroadcastServicesImpl brdImpl = new BroadcastServicesImpl(serverState);
+            LeaseBroadcastImpl lsImpl = new LeaseBroadcastImpl(serverState);
             ClientServicesImpl cltImpl = new ClientServicesImpl(serverState, names_lm.Concat(names_tm).ToList(), urls_lm.Concat(urls_tm).ToList(), types);
             
             Server server = new Server
             {
-                Services = { BroadcastServices.BindService(brdImpl), TransactionServices.BindService(cltImpl) },
+                Services = { BroadcastServices.BindService(brdImpl), TransactionServices.BindService(cltImpl), LeaseInformServices.BindService(lsImpl) },
                 Ports = { serverPort }
             };
 
