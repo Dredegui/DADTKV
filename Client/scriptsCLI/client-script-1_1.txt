@@ -11,10 +11,13 @@
 # a T command includes a read set and a write set
 # the read set is just a list of string keys
 # the write set contains keys and values
-T ("a-key-name","another-key-name") (<"name1",10>,<"name2",20>)
+T ("D") (<"A",10>,<"B",20>)
+T ("D") (<"C",40>)
 # both the read set and write set can be empty but the parenthesis will still be in the command
 # wait command (in milliseconds)
 W 5000
 # A status request from all the processes in the system
 # is issued via a S command
 S
+W 5000
+T ("A","B","C") ()

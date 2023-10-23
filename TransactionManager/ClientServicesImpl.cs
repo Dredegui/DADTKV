@@ -178,7 +178,7 @@ namespace TransactionManager
                     }
                 }
                 printQueue(" BEFORE REMOVE KEYS QUEUE ");
-                removeFromQueue(reads, keys);
+                removeFromQueue(reads, keys); // TODO SAME LEASES ON 2 TRANSACTIONS ON SAME TM
                 printQueue(" AFTER REMOVE KEYS QUEUE ");
                 Console.WriteLine("[" + state.GetName() + "] It's my turn on the queue so I will do the read and write operations");
 
@@ -218,7 +218,7 @@ namespace TransactionManager
             foreach (var stub in stubsTM.Values)
             {
 
-                stub.Broadcast(message); // TODO async?
+                stub.BroadcastAsync(message); // TODO save async calls and wait for them
             }
             Console.WriteLine("[TM] Broadcasted request for another TMs in order to replicate the state");
             SubmitReply reply = new SubmitReply();
