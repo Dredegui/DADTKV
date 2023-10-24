@@ -49,6 +49,15 @@ namespace TransactionManager
                 }
             }
 
+            // WALL BARRIER
+            string wall_barrier = args[3 + num_lm + 1 + num_tm];
+            
+            // TIME SLOT DURATION
+            int time_slot_duration = Int32.Parse(args[3 + num_lm + 1 + num_tm + 1]);
+
+            // NUMBER OF TIME SLOTS
+            int number_time_slots = Int32.Parse(args[3 + num_lm + 1 + num_tm + 2]);
+
             string startupMessage;
             ServerPort serverPort;
 

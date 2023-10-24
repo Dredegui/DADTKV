@@ -46,6 +46,20 @@ namespace LeaseManager
                 Console.WriteLine("[TM] connected to another TM: " + "http://localhost:" + port_tm.ToString());
                 types.Add(1);
             }
+
+            // WALL BARRIER
+            string wall_barrier = args[5 + num_lm + num_tm];
+
+            // TIME SLOT DURATION
+            int time_slot_duration = Int32.Parse(args[5 + num_lm + num_tm + 1]);
+
+            // NUMBER OF TIME SLOTS
+            int number_time_slots = Int32.Parse(args[5 + num_lm + num_tm + 2]);
+
+            Console.WriteLine("[SUPER MEGA DUPER WOOPER] WALL: " + wall_barrier + "// TIME DUR: " + time_slot_duration + " // NUM TIME SLOTS: " + number_time_slots);
+
+
+
             string startupMessage;
             ServerPort serverPort;
 

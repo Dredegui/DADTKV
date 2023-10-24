@@ -15,8 +15,11 @@
             string name = args[0];
             string script_name = args[1];
             int chosen_tm = Int32.Parse(args[2]);
+
             // GET Tms
             int num_tm = Int32.Parse(args[3]);
+
+
             List<string> tms = new List<string>();
             List<string> urls = new List<string>();
             for (int i = 0; i < num_tm; i++)
@@ -26,6 +29,10 @@
                 Console.WriteLine("[CLI] New connection with TM http://localhost:" + port.ToString());
                 urls.Add("http://localhost:" + port.ToString());
             }
+
+
+            // WALL BARRIER
+            string wall_barrier = args[4 + num_tm];
 
             Console.WriteLine("[CLI] Started to run a client");
 
