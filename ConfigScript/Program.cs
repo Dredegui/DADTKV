@@ -4,6 +4,8 @@ using System.IO;
 using System.Xml.Schema;
 using System.Text.RegularExpressions;
 using System.Collections;
+using System.Security.Cryptography;
+using System.Globalization;
 
 namespace ConfigScript
 {
@@ -33,7 +35,22 @@ namespace ConfigScript
         static int num_tm;
         static int num_cli;
 
-        
+
+        static string wall_barrier;
+        static string time_slot_duration;
+        static string number_of_time_slots;
+
+        static List<string> all_servers_names = new List<string>();
+
+        static List<string> rounds_of_failure = new List<string>();
+        static List<List<int>> failures_per_round = new List<List<int>>();
+        static List<int> num_failures_per_round = new List<int>();
+        static int num_failures;
+
+        static List<List<string>> suspects_per_round =  new List<List<string>>();
+        static List<int> num_suspects_per_round = new List<int>();
+
+
         public static Tuple<string,string> splitStr(string str)
         {
             string ret_1 = "";
@@ -79,6 +96,7 @@ namespace ConfigScript
                 tm_names += " " + name;
                 tm_hosts += " " + inp;
                 tm_names_run.Add(name);
+                all_servers_names.Add(name);
                 tm_hosts_run.Add(inp);
                 num_tm++;
             }
@@ -87,6 +105,7 @@ namespace ConfigScript
                 lm_names += " " + name;
                 lm_hosts += " " + inp;
                 lm_names_run.Add(name);
+                all_servers_names.Add(name);
                 lm_hosts_run.Add(inp);
                 num_lm++;
             }
@@ -98,6 +117,55 @@ namespace ConfigScript
             }
         }
 
+        public static void parseFailure(string line)
+        {
+            int count = 0;
+            int all_servers = all_servers_names.Count();
+
+            Tuple<string, string> split = splitStr(line);
+            string failure_round = split.Item1;
+            rounds_of_failure.Add(failure_round);
+            line = split.Item2;
+            Console.WriteLine("BITCH: " + line);
+
+            // CHECK THE CRASHES
+            List<int> failures = new List<int>();
+            int num_failures_round = 0;
+            while (count <=  all_servers)
+            {
+                split = splitStr(line);
+                string n = split.Item1;
+                line = split.Item2;
+                count++;
+
+                if (n == "C")
+                {
+                    failures.Add(count);
+                    num_failures_round++;
+                }
+            }
+
+            failures_per_round.Add(failures);
+            num_failures_per_round.Add(num_failures_round);
+
+            // CHECK THE SUSPECTS
+
+            while (line != "")
+            {
+                split = splitStr(line);
+                string n = split.Item1;
+                line = split.Item2;
+                Console.WriteLine("SUSPEITA: " + n);
+            }
+
+            foreach (int e in failures)
+            {
+                Console.Write("[" + e + "]");
+            }
+
+
+            Console.WriteLine(num_failures_round.ToString());
+        }
         public static void lineBehaviour(string line)
         {
 
@@ -111,10 +179,32 @@ namespace ConfigScript
             {
                 startNewProcess(split, line);
             }
-            if (func != "#" && func != "P")
+
+            // PHYSICAL WALL TIME
+            if (func == "T")
             {
-                Console.Write("// TODO: ");
-                Console.WriteLine(line);
+                wall_barrier = line;
+                Console.WriteLine("[CONFIG] Physical wall time " + wall_barrier);
+            }
+
+            // TIME SLOT DURATION
+            if (func == "D")
+            {
+                time_slot_duration = line;
+                Console.WriteLine("[CONFIG] Time slot duration " + time_slot_duration);
+            }
+
+            if (func == "S")
+            {
+                number_of_time_slots = line;
+                Console.WriteLine("[CONFIG] Number of time slots: " +  number_of_time_slots);
+            }
+
+            // FAILURES
+            if (func == "F")
+            {
+                num_failures++;
+                parseFailure(line);
             }
         }
         public static string getSolutionPath()
@@ -156,25 +246,33 @@ namespace ConfigScript
                 }
             }
 
+            Console.WriteLine("NUM OF FAILURES: " + num_failures);
+
+
+            foreach (string s in rounds_of_failure) {
+                Console.WriteLine("RONDA: " + s);
+            }
+
+            return;
             // Create LM
             for (int i = 0; i < num_lm;i++)
             {
                 Console.WriteLine("[CONFIG] LM started with sucess");
-                Process.Start(LM_PATH, i + " " + lm_names_run[i] + " " + lm_hosts_run[i] + " " + num_lm.ToString() + " " + lm_hosts + " " + num_tm.ToString() + " " + tm_hosts);
+                Process.Start(LM_PATH, i + " " + lm_names_run[i] + " " + lm_hosts_run[i] + " " + num_lm.ToString() + " " + lm_hosts + " " + num_tm.ToString() + " " + tm_hosts + " " +  wall_barrier + " " + time_slot_duration);
             }
             //Thread.Sleep(1000);
             // Create TM 
             for (int i = 0; i < num_tm;i++)
             {
                 Console.WriteLine("[CONFIG] TM started with sucess");
-                Process.Start(TM_PATH, tm_names_run[i] + " " + tm_hosts_run[i] + " " + num_lm.ToString() + " "+ lm_hosts + " " + num_tm.ToString() + " " + tm_hosts);
+                Process.Start(TM_PATH, tm_names_run[i] + " " + tm_hosts_run[i] + " " + num_lm.ToString() + " "+ lm_hosts + " " + num_tm.ToString() + " " + tm_hosts + wall_barrier + time_slot_duration);
                 //Thread.Sleep(500);
             }
             // Create CLI
             for (int i = 0; i < num_cli; i++)
             {
                 Console.WriteLine("[CONFIG] Cliented started with sucess");
-                Process.Start(CLI_PATH, cli_names_run[i] + " " + cli_scripts_run[i] + " " + i%num_tm + " " + num_tm.ToString() + "  "+ tm_hosts);
+                Process.Start(CLI_PATH, cli_names_run[i] + " " + cli_scripts_run[i] + " " + i%num_tm + " " + num_tm.ToString() + "  "+ tm_hosts + wall_barrier + time_slot_duration);
                 //Thread.Sleep(500);
             }
             while (true);
