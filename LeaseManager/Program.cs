@@ -34,6 +34,8 @@ namespace LeaseManager
                     types.Add(0);
                 }
             }
+
+            // INITIALIZE TM that he knows
             int num_tm = Int32.Parse(args[4 + num_lm]);
             List<string> names_tm = new List<string>();
             List<string> urls_tm = new List<string>();
@@ -55,8 +57,6 @@ namespace LeaseManager
 
             // NUMBER OF TIME SLOTS
             int number_time_slots = Int32.Parse(args[5 + num_lm + num_tm + 2]);
-
-            Console.WriteLine("[SUPER MEGA DUPER WOOPER] WALL: " + wall_barrier + "// TIME DUR: " + time_slot_duration + " // NUM TIME SLOTS: " + number_time_slots);
 
 
 
