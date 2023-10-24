@@ -121,7 +121,7 @@ namespace TransactionManager
             {
                 foreach (int i in l)
                 {
-                    Console.WriteLine("FALHAS DA RONDA " + r + " : " +  i);
+                    Console.WriteLine("[TM MOTHER FUCKER] FALHAS DA RONDA " + r + " : " +  i);
                 }
                 r++;
             }
@@ -132,7 +132,7 @@ namespace TransactionManager
             {
                 foreach (int i in l)
                 {
-                    Console.WriteLine("DESCONFIANÇA DA RONDA " + r + " : " + i);
+                    Console.WriteLine("[TM MOTHER FUCKER] DESCONFIANÇA DA RONDA " + r + " : " + i);
                 }
                 r++;
             }

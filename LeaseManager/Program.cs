@@ -58,7 +58,84 @@ namespace LeaseManager
             // NUMBER OF TIME SLOTS
             int number_time_slots = Int32.Parse(args[5 + num_lm + num_tm + 2]);
 
+            // GET REAL IDS ORDER
+            List<int> idOrder = new List<int>();
 
+            int c = 0;
+
+            while (c < num_tm + num_lm)
+            {
+                idOrder.Add(Int32.Parse(args[5 + num_lm + num_tm + 3 + c]));
+                c += 1;
+            }
+
+            // NUM FAILURES
+            int num_failures = Int32.Parse(args[5 + num_lm + num_tm + 3 + num_tm + num_lm]);
+
+            // GET FAILURE INFORMATION
+            int index = 5 + num_lm + num_tm + 3 + num_tm + num_lm + 1;
+            int f = 0;
+            int total_in_failures = 0;
+            int total_in_suspescts = 0;
+
+            List<int> rounds_of_failure = new List<int>();
+            List<List<int>> failures_per_round = new List<List<int>>();
+            List<List<int>> suspects_per_round = new List<List<int>>();
+            while (f < num_failures)
+            {
+                rounds_of_failure.Add(Int32.Parse(args[index + f + total_in_failures + total_in_suspescts]));
+
+                int n = Int32.Parse(args[index + f + total_in_failures + total_in_suspescts + 1]);
+                total_in_failures++;
+                int i = 0;
+                List<int> fails_this_round = new List<int>();
+                while (i < n)
+                {
+                    fails_this_round.Add(Int32.Parse(args[index + f + total_in_failures + total_in_suspescts + 1]));
+                    total_in_failures++;
+                    i++;
+                }
+
+                n = Int32.Parse(args[index + f + total_in_failures + total_in_suspescts + 1]);
+                total_in_suspescts++;
+                i = 0;
+                List<int> suspects_this_round = new List<int>();
+                while (i < n)
+                {
+                    suspects_this_round.Add(Int32.Parse(args[index + f + total_in_failures + total_in_suspescts + 1]));
+                    total_in_suspescts++;
+                    suspects_this_round.Add(Int32.Parse(args[index + f + total_in_failures + total_in_suspescts + 1]));
+                    total_in_suspescts++;
+                    i++;
+                }
+
+                suspects_per_round.Add(suspects_this_round);
+                failures_per_round.Add(fails_this_round);
+
+                f++;
+            }
+
+            // DEBUG
+            int r = 0;
+            foreach (List<int> l in failures_per_round)
+            {
+                foreach (int i in l)
+                {
+                    Console.WriteLine("[LM MOTHER FUCKER] FALHAS DA RONDA " + r + " : " + i);
+                }
+                r++;
+            }
+
+            // DEBUG
+            r = 0;
+            foreach (List<int> l in suspects_per_round)
+            {
+                foreach (int i in l)
+                {
+                    Console.WriteLine("[LM MOTHER FUCKER] DESCONFIANÇA DA RONDA " + r + " : " + i);
+                }
+                r++;
+            }
 
             string startupMessage;
             ServerPort serverPort;

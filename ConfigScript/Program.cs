@@ -169,7 +169,6 @@ namespace ConfigScript
             string failure_round = split.Item1;
             rounds_of_failure.Add(failure_round);
             line = split.Item2;
-            Console.WriteLine("BITCH: " + line);
 
             // CHECK THE CRASHES
             List<int> failures = new List<int>();
@@ -205,24 +204,6 @@ namespace ConfigScript
             }
             suspects_per_round.Add(suspects);
             num_suspects_per_round.Add(num_suspects);
-
-            Console.Write("CRASHOU :::> ");
-            foreach (int e in failures)
-            {
-                Console.Write("[" + e + "]");
-            }
-
-            Console.WriteLine(num_failures_round.ToString());
-
-
-            Console.Write("DESCONFIOU:::> ");
-            foreach (string e in suspects)
-            {
-                Console.Write("[" + e + "]");
-            }
-
-            Console.WriteLine(num_suspects);
-
         }
 
         
@@ -263,14 +244,6 @@ namespace ConfigScript
                 i += 1;
 
             }
-
-            foreach (char c in ret)
-            {
-                Console.Write(c);
-            }
-
-            Console.WriteLine();
-
             return ret;
         }
         
@@ -376,6 +349,7 @@ namespace ConfigScript
             {
                 Console.WriteLine("[CONFIG] LM started with sucess");
                 Process.Start(LM_PATH, i + " " + lm_names_run[i] + " " + lm_hosts_run[i] + " " + num_lm.ToString() + " " + lm_hosts + " " + num_tm.ToString() + " " + tm_hosts + " " +  wall_barrier + " " + time_slot_duration + " " + number_of_time_slots  + " " + buildRealIds() +  " " + buildFailureArguments());
+                Thread.Sleep(300);
             }
             //Thread.Sleep(1000);
             // Create TM 
