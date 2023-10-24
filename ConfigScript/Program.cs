@@ -224,6 +224,14 @@ namespace ConfigScript
             Console.WriteLine(num_suspects);
 
         }
+
+        
+        public static string buildFailureArguments()
+        {
+            return "";
+        }
+        
+
         public static void lineBehaviour(string line)
         {
 
