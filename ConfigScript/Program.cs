@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Collections;
 using System.Security.Cryptography;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace ConfigScript
 {
@@ -117,6 +118,48 @@ namespace ConfigScript
             }
         }
 
+        public static string getNameId(string name)
+        {
+            int ret = 0;
+
+            foreach (string s in all_servers_names)
+            {
+                if (s == name)
+                {
+                    return "" + ret; 
+                }
+                ret++;
+            }
+
+            return "NOT POSSIBLE, THIS IS AN ERROR";
+        }
+
+        public static string parseSuspect(string suspect)
+        {
+
+            string s1 = "";
+            string s2 = "";
+            bool seen = false;
+            foreach(char c in suspect)
+            {
+                if (c != ')' && c != '(' && !seen && c != ',') 
+                {
+                    s1 += c;
+                }
+                if (c == ',')
+                {
+                    seen = true;
+                }
+                if (c != ')' && c != '(' && seen && c != ',')
+                {
+                    s2 += c;
+                }
+
+            }
+
+            return getNameId(s1) + " " + getNameId(s2);
+        }
+
         public static void parseFailure(string line)
         {
             int count = 0;
@@ -150,21 +193,36 @@ namespace ConfigScript
 
             // CHECK THE SUSPECTS
 
+            List<string> suspects = new List<string>();
+            int num_suspects = 0;
             while (line != "")
             {
                 split = splitStr(line);
                 string n = split.Item1;
                 line = split.Item2;
-                Console.WriteLine("SUSPEITA: " + n);
+                suspects.Add(parseSuspect(n));
+                num_suspects++;
             }
+            suspects_per_round.Add(suspects);
+            num_suspects_per_round.Add(num_suspects);
 
+            Console.Write("CRASHOU :::> ");
             foreach (int e in failures)
             {
                 Console.Write("[" + e + "]");
             }
 
-
             Console.WriteLine(num_failures_round.ToString());
+
+
+            Console.Write("DESCONFIOU:::> ");
+            foreach (string e in suspects)
+            {
+                Console.Write("[" + e + "]");
+            }
+
+            Console.WriteLine(num_suspects);
+
         }
         public static void lineBehaviour(string line)
         {
