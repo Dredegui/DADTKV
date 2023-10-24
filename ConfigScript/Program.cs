@@ -228,7 +228,46 @@ namespace ConfigScript
         
         public static string buildFailureArguments()
         {
-            return "";
+
+            // <num_falhas> <ronda> <num_faiture> <faiulures> <num_suspects> <suspects>
+
+            string ret = "";
+
+            ret += num_failures.ToString() + " ";
+
+            int i = 0;
+
+            while (i < num_failures)
+            {
+                ret += rounds_of_failure[i] + " ";
+                ret += num_failures_per_round[i] + " ";
+
+                int j = 0; 
+                
+                while (j < num_failures_per_round[i])
+                {
+                    ret += failures_per_round[i][j] + " ";
+                    j += 1;
+                }
+
+                ret += num_suspects_per_round[i] + " ";
+
+                j = 0;
+
+                while (j < num_suspects_per_round[i])
+                {
+                    ret += suspects_per_round[i][j] + " ";
+                    j += 1;
+                }
+
+                i += 1;
+
+            }
+
+
+            Console.WriteLine("COMPLETED: " + ret);
+
+            return ret;
         }
         
 
@@ -319,26 +358,25 @@ namespace ConfigScript
                 Console.WriteLine("RONDA: " + s);
             }
 
-            return;
             // Create LM
             for (int i = 0; i < num_lm;i++)
             {
                 Console.WriteLine("[CONFIG] LM started with sucess");
-                Process.Start(LM_PATH, i + " " + lm_names_run[i] + " " + lm_hosts_run[i] + " " + num_lm.ToString() + " " + lm_hosts + " " + num_tm.ToString() + " " + tm_hosts + " " +  wall_barrier + " " + time_slot_duration);
+                Process.Start(LM_PATH, i + " " + lm_names_run[i] + " " + lm_hosts_run[i] + " " + num_lm.ToString() + " " + lm_hosts + " " + num_tm.ToString() + " " + tm_hosts + " " +  wall_barrier + " " + time_slot_duration + " " + number_of_time_slots  + " " + buildFailureArguments());
             }
             //Thread.Sleep(1000);
             // Create TM 
             for (int i = 0; i < num_tm;i++)
             {
                 Console.WriteLine("[CONFIG] TM started with sucess");
-                Process.Start(TM_PATH, tm_names_run[i] + " " + tm_hosts_run[i] + " " + num_lm.ToString() + " "+ lm_hosts + " " + num_tm.ToString() + " " + tm_hosts + wall_barrier + time_slot_duration);
+                Process.Start(TM_PATH, tm_names_run[i] + " " + tm_hosts_run[i] + " " + num_lm.ToString() + " "+ lm_hosts + " " + num_tm.ToString() + " " + tm_hosts + wall_barrier + time_slot_duration + " " + number_of_time_slots + " " + buildFailureArguments());
                 //Thread.Sleep(500);
             }
             // Create CLI
             for (int i = 0; i < num_cli; i++)
             {
                 Console.WriteLine("[CONFIG] Cliented started with sucess");
-                Process.Start(CLI_PATH, cli_names_run[i] + " " + cli_scripts_run[i] + " " + i%num_tm + " " + num_tm.ToString() + "  "+ tm_hosts + wall_barrier + time_slot_duration);
+                Process.Start(CLI_PATH, cli_names_run[i] + " " + cli_scripts_run[i] + " " + i%num_tm + " " + num_tm.ToString() + " " + tm_hosts + wall_barrier);
                 //Thread.Sleep(500);
             }
             while (true);
