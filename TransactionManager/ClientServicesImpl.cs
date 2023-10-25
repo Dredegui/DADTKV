@@ -130,7 +130,7 @@ namespace TransactionManager
                 Console.WriteLine(shallowCopy[ls].Count);
             }
             // Simulate some work in the function thread.
-            Thread.Sleep(100);
+            Thread.Sleep(500);
             bool diff = false;
             LeaseUpdateRequest request = new LeaseUpdateRequest();
             foreach (string key in shallowCopy.Keys)

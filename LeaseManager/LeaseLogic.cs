@@ -175,27 +175,6 @@ namespace LeaseManager
                 // CHECK CRASHES:
                 if (rounds_of_failure.Contains(i))
                 {
-                    Console.Write("DEBUG ID ORDER: ");
-                    foreach (int e in idOrder)
-                    {
-                        Console.Write(e + " ");
-                    }
-                    Console.WriteLine("");
-
-                    Console.Write("DEBUG ID ALL SERVERS: ");
-                    foreach (string e in all_servers)
-                    {
-                        Console.Write(e + " ");
-                    }
-                    Console.WriteLine("");
-
-                    Console.Write("FAIULURES: ");
-                    foreach (int e in failures_per_round[crash_count])
-                    {
-                        Console.Write(e + " ");
-                    }
-                    Console.WriteLine("");
-
                     foreach (int el in failures_per_round[crash_count])
                     {
                         // TODO : MANDAR ABAIXO O SERVIDOR ---> all_servers[idOrder[el-1]]

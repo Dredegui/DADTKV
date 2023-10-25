@@ -202,6 +202,7 @@ namespace TransactionManager
             int crash_count = 0;
             while (round_count < number_time_slots)
             {
+                Thread.Sleep(time_slot_duration);
                 if (rounds_of_failure.Contains(round_count))
                 {
                     foreach (int el in failures_per_round[crash_count])
@@ -220,7 +221,7 @@ namespace TransactionManager
                     crash_count++;
 
                 }
-                Thread.Sleep(time_slot_duration);
+                
                 round_count++;
             }
 

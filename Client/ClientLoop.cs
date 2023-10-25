@@ -116,27 +116,27 @@ namespace Client
         {
             var lines = File.ReadLines(SCRIPT_PATH);
             
-
-            foreach (var line in lines)
+            while (true)
             {
-                Tuple<string, string> split = splitStr(line);
-                string com = split.Item1;
+                foreach (var line in lines)
+                {
+                    Tuple<string, string> split = splitStr(line);
+                    string com = split.Item1;
 
-                if (com == "T")
-                {
-                    NewTransaction(split.Item2);
-                }
-                if (com == "W")
-                {
-                    Thread.Sleep(Int32.Parse(split.Item2));
-                }
-                if (com == "S")
-                {
-                    CheckStatus();
+                    if (com == "T")
+                    {
+                        NewTransaction(split.Item2);
+                    }
+                    if (com == "W")
+                    {
+                        Thread.Sleep(Int32.Parse(split.Item2));
+                    }
+                    if (com == "S")
+                    {
+                        CheckStatus();
+                    }
                 }
             }
-
-            while (true);
         }
 
     }
