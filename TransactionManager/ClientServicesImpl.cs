@@ -113,13 +113,29 @@ namespace TransactionManager
         private async void TimerThread(Object transLeases)
         {
             List<string> transactionLeases = (List<string>)transLeases;
-            Dictionary<string, List<string>> shallowCopy = new Dictionary<string, List<string>>(state.queue);
+            Console.WriteLine("[" + state.GetName() + " TIMER] STARTED");
+            Dictionary<string, List<string>> shallowCopy = new Dictionary<string, List<string>>();
+            foreach (string key in state.queue.Keys)
+            {
+                shallowCopy[key] = new List<string>();
+                foreach (string value in state.queue[key])
+                {
+                    shallowCopy[key].Add(value);
+                }
+                
+            }
+            foreach (string ls in transactionLeases)
+            {
+                Console.WriteLine(ls);
+                Console.WriteLine(shallowCopy[ls].Count);
+            }
             // Simulate some work in the function thread.
-            Thread.Sleep(500);
+            Thread.Sleep(100);
             bool diff = false;
             LeaseUpdateRequest request = new LeaseUpdateRequest();
             foreach (string key in shallowCopy.Keys)
             {
+                Console.WriteLine("Key: " + key + " | Current length: " + state.queue[key].Count + " | Old length: " + shallowCopy[key].Count);
                 if (state.queue[key].Count < shallowCopy[key].Count)
                 {
                     diff = true;
@@ -132,12 +148,11 @@ namespace TransactionManager
             }
             if (!diff)
             {
-                Console.WriteLine("[" + state.GetName() + "] Timer handling started");
+                Console.WriteLine("[" + state.GetName() + " TIMER] Timer handling started");
                 // Broadcast leases to see if there is an invalid tm
                 List<Task<LeaseUpdateReply>> updateAwaitList = new List<Task<LeaseUpdateReply>>();
                 foreach (BroadcastServices.BroadcastServicesClient stub in stubsTM.Values)
                 {
-                    Console.WriteLine("[" + state.GetName() + "] Sending lease request for a TM");
                     updateAwaitList.Add(stub.LeaseUpdateAsync(request).ResponseAsync);
                 }
                 Console.WriteLine("[" + state.GetName() + "] Waiting for every TM to respond");
@@ -174,7 +189,7 @@ namespace TransactionManager
             }
             else
             {
-                Console.WriteLine("[" + state.GetName() + "] Already received transaction broadcast");
+                Console.WriteLine("[" + state.GetName() + " TIMER] Already received transaction broadcast");
             }
             
         }
@@ -254,10 +269,13 @@ namespace TransactionManager
                 Console.WriteLine("[" + state.GetName() + "] It's my turn on the queue so I will do the read and write operations");
 
             }
+            List<int> lengthsReads = new List<int>();
+            List<int> lengthsWrites = new List<int>();
             lock (state)
             {
                 foreach (string read in reads)
                 {
+                    lengthsReads.Add(state.queue[read].Count);
                     if (state.ValidKey(read))
                     {
                         results.Add(state.GetValue(read));
@@ -272,6 +290,7 @@ namespace TransactionManager
 
                 for (int i = 0; i < keys.Count; i++)
                 {
+                    lengthsWrites.Add(state.queue[keys[i]].Count);
                     state.SetValue(keys[i], values[i]);
                 }
                 Console.WriteLine("[" + state.GetName() + "] Write operation done with success: Changed values");
@@ -284,6 +303,7 @@ namespace TransactionManager
             message.Keys.AddRange(keys);
             message.Values.AddRange(values);
             message.Reads.AddRange(reads);
+            message.Lenghts.AddRange(lengthsWrites.Concat(lengthsReads));
             transcationId++;
             Console.WriteLine("[" + state.GetName() + "] Broadcast to other tms");
             foreach (var stub in stubsTM.Values)

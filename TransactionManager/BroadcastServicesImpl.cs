@@ -26,18 +26,28 @@ namespace TransactionManager
             // Write operation
             List<string> keys = message.Keys.ToList();
             List<int> values = message.Values.ToList();
+            List<int> lengths = message.Lenghts.ToList();
             lock (state)
             {
                 for (int i = 0; i < keys.Count; i++)
                 {
-                    state.SetValue(keys[i], values[i]);
-                    state.queue[keys[i]].RemoveAt(0);
-                }
-                foreach (string read in message.Reads)
-                {
-                    if (state.queue[read][0] == message.Name)
+                    string key = keys[i];
+                    Console.WriteLine("Received length: " + lengths[i] + " | Current Length: " + state.queue[key].Count);
+                    if (lengths[i] + 1 == state.queue[key].Count)
                     {
-                        state.queue[read].RemoveAt(0);
+                        state.SetValue(key, values[i]);
+                        state.queue[key].RemoveAt(0);
+                    }
+                }
+                for (int i = 0; i < message.Reads.Count; i++)
+                {
+                    string read = message.Reads[i];
+                    if (lengths[i + keys.Count] + 1 == state.queue[read].Count)
+                    {
+                        if (state.queue[read][0] == message.Name)
+                        {
+                            state.queue[read].RemoveAt(0);
+                        }
                     }
                 }
                 Monitor.PulseAll(state);
