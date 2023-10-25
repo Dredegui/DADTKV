@@ -201,11 +201,11 @@ namespace LeaseManager
                         // TODO : MANDAR ABAIXO O SERVIDOR ---> all_servers[idOrder[el-1]]
                         if (el < num_servers)
                         {
-                            Console.WriteLine("[LM YYYYYYYYYYYYYYYYYYYYYYYYY] " + all_servers[idOrder[el]]);
+                            Console.WriteLine("[LM TODO CRASH HERE] " + all_servers[idOrder[el]]);
                         }
                         else
                         {
-                            Console.WriteLine("[LM YYYYYYYYYYYYYYYYYYYYYYYYY] " + all_servers[idOrder[0]]);
+                            Console.WriteLine("[LM TODO CRASH HERE] " + all_servers[idOrder[0]]);
                         }
 
                     }

@@ -9,6 +9,25 @@
         {
             return Int32.Parse(hostname.Split(':')[2]);
         }
+
+        public static Task WaitForTimeAsync(DateTime wantedTimeToStart)
+        {
+            TimeSpan delay = wantedTimeToStart - DateTime.Now;
+
+            if (delay.TotalMilliseconds > 0)
+            {
+                return Task.Delay(delay).ContinueWith((t) =>
+                {
+                    // Continue with your code after the desired time has been reached
+                });
+            }
+            else
+            {
+                // The desired time has already passed; you can handle this case accordingly
+                return Task.CompletedTask;
+            }
+        }
+
         static void Main(string[] args)
         {
             
@@ -16,9 +35,21 @@
             string script_name = args[1];
             int chosen_tm = Int32.Parse(args[2]);
 
+            int s = DateTime.Now.Second;
+            int until_next_minute = 60 - s;
+            int m = 1000 - DateTime.Now.Millisecond;
+
+            DateTime wantedTimeToStart = DateTime.Now.AddSeconds(until_next_minute).AddMilliseconds(m); // Replace this with your desired start time
+
+            var task = WaitForTimeAsync(wantedTimeToStart);
+
+            // You can wait for the task to complete using Wait
+            task.Wait();
             // GET Tms
             int num_tm = Int32.Parse(args[3]);
 
+            // WALL BARRIER
+            string wall_barrier = args[4 + num_tm];
 
             List<string> tms = new List<string>();
             List<string> urls = new List<string>();
@@ -31,8 +62,6 @@
             }
 
 
-            // WALL BARRIER
-            string wall_barrier = args[4 + num_tm];
 
             Console.WriteLine("[CLI] Started to run a client");
 

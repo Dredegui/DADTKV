@@ -9,6 +9,25 @@ namespace TransactionManager
         {
             return Int32.Parse(hostname.Split(':')[2]);
         }
+
+        public static Task WaitForTimeAsync(DateTime wantedTimeToStart)
+        {
+            TimeSpan delay = wantedTimeToStart - DateTime.Now;
+
+            if (delay.TotalMilliseconds > 0)
+            {
+                return Task.Delay(delay).ContinueWith((t) =>
+                {
+                    // Continue with your code after the desired time has been reached
+                });
+            }
+            else
+            {
+                // The desired time has already passed; you can handle this case accordingly
+                return Task.CompletedTask;
+            }
+        }
+
         static void Main(string[] args)
         {
 
@@ -17,6 +36,16 @@ namespace TransactionManager
             string LOCALHOST = "localhost";
             int port = getPort(hostname);
 
+            int s = DateTime.Now.Second;
+            int until_next_minute = 60 - s;
+            int m = 1000 - DateTime.Now.Millisecond;
+
+            DateTime wantedTimeToStart = DateTime.Now.AddSeconds(until_next_minute).AddMilliseconds(m); // Replace this with your desired start time
+
+            var task = WaitForTimeAsync(wantedTimeToStart);
+
+            // You can wait for the task to complete using Wait
+            task.Wait();
             // Initialize LM he knows about
             int num_lm = Int32.Parse(args[2]);
 
@@ -177,14 +206,14 @@ namespace TransactionManager
                 {
                     foreach (int el in failures_per_round[crash_count])
                     {
-                        // TODO : MANDAR ABAIXO O SERVIDOR ---> all_servers[idOrder[el-1]]
+                        // TODO : CODE FOR THE CRASH
                         if (el < num_lm + num_tm)
                         {
-                            Console.WriteLine("[TM XXXXXXXXXXXXXXXXXXXXXXXXXX] " + all_servers[idOrder[el]]);
+                            Console.WriteLine("[TM TODO CRASH HERE] " + all_servers[idOrder[el]]);
                         }
                         else
                         {
-                            Console.WriteLine("[TM XXXXXXXXXXXXXXXXXXXXXXXXXX] " + all_servers[idOrder[0]]);
+                            Console.WriteLine("[TM TODO CRASH HERE] " + all_servers[idOrder[0]]);
                         }
                         
                     }
