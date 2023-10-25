@@ -2,6 +2,7 @@ syntax = "proto3";
 
 service BroadcastServices {
 	rpc Broadcast(BroadcastMessage) returns (BroadcastAck);
+	rpc LeaseUpdate(LeaseUpdateRequest) returns (LeaseUpdateReply);
 }
 
 message BroadcastMessage {
@@ -16,3 +17,17 @@ message BroadcastAck{
 	bool value = 1;
 }
 
+message LeaseUpdateRequest {
+	repeated string leases = 1;
+	repeated int32 lenghts = 2;
+}
+
+message Queue {
+	string lease = 1;
+	repeated string tms = 2;
+}
+
+message LeaseUpdateReply {
+	repeated Queue update = 1;
+	bool ack = 2;
+}

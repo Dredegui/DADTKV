@@ -18,10 +18,10 @@ namespace TransactionManager
         }
 
         public override Task<BroadcastAck> Broadcast(BroadcastMessage message, ServerCallContext context) {
-            return Task.FromResult(URBroadcast(message));
+            return Task.FromResult(BroadcastImpl(message));
         }
 
-        public BroadcastAck URBroadcast(BroadcastMessage message)
+        public BroadcastAck BroadcastImpl(BroadcastMessage message)
         {
             // Write operation
             List<string> keys = message.Keys.ToList();
@@ -46,6 +46,32 @@ namespace TransactionManager
             BroadcastAck ack = new BroadcastAck();
             ack.Value = true;
             return ack;
+        }
+
+        public override Task<LeaseUpdateReply> LeaseUpdate(LeaseUpdateRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(LeaseUpdateImpl(request));
+        }
+        public LeaseUpdateReply LeaseUpdateImpl(LeaseUpdateRequest request)
+        {
+            LeaseUpdateReply reply = new LeaseUpdateReply();
+            reply.Ack = false;
+            List<string> leases = request.Leases.ToList();
+            List<int> lenghts = request.Lenghts.ToList();
+            for (int i = 0; i < leases.Count; i++)
+            {
+                string lease = leases[i];
+                int length = lenghts[i];
+                if (state.queue[lease].Count < length)
+                {
+                    Queue temp = new Queue();
+                    temp.Lease = lease;
+                    temp.Tms.AddRange(state.queue[lease]);
+                    reply.Update.Add(temp);
+                    reply.Ack = true;
+                }
+            }
+            return reply;
         }
     }
 }

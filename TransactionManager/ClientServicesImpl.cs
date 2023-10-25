@@ -110,6 +110,75 @@ namespace TransactionManager
             return true;
         }
 
+        private async void TimerThread(Object transLeases)
+        {
+            List<string> transactionLeases = (List<string>)transLeases;
+            Dictionary<string, List<string>> shallowCopy = new Dictionary<string, List<string>>(state.queue);
+            // Simulate some work in the function thread.
+            Thread.Sleep(500);
+            bool diff = false;
+            LeaseUpdateRequest request = new LeaseUpdateRequest();
+            foreach (string key in shallowCopy.Keys)
+            {
+                if (state.queue[key].Count < shallowCopy[key].Count)
+                {
+                    diff = true;
+                }
+            }
+            foreach (string lease in transactionLeases)
+            {
+                request.Leases.Add(lease);
+                request.Lenghts.Add(shallowCopy[lease].Count);
+            }
+            if (!diff)
+            {
+                Console.WriteLine("[" + state.GetName() + "] Timer handling started");
+                // Broadcast leases to see if there is an invalid tm
+                List<Task<LeaseUpdateReply>> updateAwaitList = new List<Task<LeaseUpdateReply>>();
+                foreach (BroadcastServices.BroadcastServicesClient stub in stubsTM.Values)
+                {
+                    Console.WriteLine("[" + state.GetName() + "] Sending lease request for a TM");
+                    updateAwaitList.Add(stub.LeaseUpdateAsync(request).ResponseAsync);
+                }
+                Console.WriteLine("[" + state.GetName() + "] Waiting for every TM to respond");
+                Task<LeaseUpdateReply[]> waitUpdate = Task.WhenAll(updateAwaitList);
+                await waitUpdate;
+                LeaseUpdateReply[] updateResults = waitUpdate.Result;
+                bool removeLease = true;
+                foreach (LeaseUpdateReply update in updateResults)
+                {
+                    if (update.Ack)
+                    {
+                        removeLease = false;
+                        foreach (Queue temp in update.Update)
+                        {
+                            if (state.queue[temp.Lease].Count > temp.Tms.Count)
+                            {
+                                state.queue[temp.Lease] = temp.Tms.ToList();
+                            }
+                        }
+                    }
+                }
+                if (removeLease)
+                {
+                    foreach (string lease in request.Leases)
+                    {
+                        state.queue[lease].RemoveAt(0);
+                    }
+                }
+                // The function thread can pulse and wake up the main thread.
+                lock (state)
+                {
+                    Monitor.PulseAll(state);
+                }
+            }
+            else
+            {
+                Console.WriteLine("[" + state.GetName() + "] Already received transaction broadcast");
+            }
+            
+        }
+
 
         public void printQueue(string pos)
         {
@@ -140,12 +209,13 @@ namespace TransactionManager
             List<string> keys = request.Keys.ToList();
             List<int> values = request.Values.ToList();
             List<string> results = new List<string>();
+            List<string> transactionLeases = reads.Concat(keys).Distinct().ToList();
             if (!checkLeases(reads, keys))
             { 
                 Console.WriteLine("[" + state.GetName() + "] Dont have the Lease for the request of the client => Build new request for LM");
                 LearnRequest learnRequest = new LearnRequest();
                 learnRequest.Tm = state.GetName();
-                learnRequest.Leases.AddRange(reads.Concat(keys).Distinct());
+                learnRequest.Leases.AddRange(transactionLeases);
                 List<Task<LearnReply>> learnAwaitList = new List<Task<LearnReply>>();
                 foreach (LearnServices.LearnServicesClient stub in stubsLM.Values)
                 {
@@ -170,7 +240,8 @@ namespace TransactionManager
                 
                 while (!checkQueue(reads, keys))
                 {
-                    
+                    Thread functionThread = new Thread(TimerThread);
+                    functionThread.Start(transactionLeases);
                     Console.WriteLine("[" + state.GetName() + "] Its not my turn yet so I will sleep until it is");
                     lock (state)
                     {
