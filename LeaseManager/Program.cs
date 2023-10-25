@@ -8,6 +8,26 @@ namespace LeaseManager
         {
             return Int32.Parse(hostname.Split(':')[2]);
         }
+
+
+        public static Task WaitForTimeAsync(DateTime wantedTimeToStart)
+        {
+            TimeSpan delay = wantedTimeToStart - DateTime.Now;
+
+            if (delay.TotalMilliseconds > 0)
+            {
+                return Task.Delay(delay).ContinueWith((t) =>
+                {
+                    // Continue with your code after the desired time has been reached
+                });
+            }
+            else
+            {
+                // The desired time has already passed; you can handle this case accordingly
+                return Task.CompletedTask;
+            }
+        }
+
         static void Main(string[] args)
         {
             int id = Int32.Parse(args[0]);
@@ -16,6 +36,18 @@ namespace LeaseManager
             string LOCALHOST = "localhost";
             int port = getPort(host);
 
+
+            int s = DateTime.Now.Second;
+            int until_next_minute = 60 - s;
+            int m = 1000 - DateTime.Now.Millisecond;
+            DateTime wantedTimeToStart = DateTime.Now.AddSeconds(until_next_minute).AddMilliseconds(m); // Replace this with your desired start time
+
+            var task = WaitForTimeAsync(wantedTimeToStart);
+
+            // You can wait for the task to complete using Wait
+            task.Wait();
+
+            List<string> all_servers = new List<string>();
             int num_lm = Int32.Parse(args[3]);
 
             // INITIALIZE LM that he knows
@@ -33,6 +65,7 @@ namespace LeaseManager
                     Console.WriteLine("[LM] connected to: " + "http://localhost:" + port_lm.ToString());
                     types.Add(0);
                 }
+                all_servers.Add("http://localhost:" + port_lm.ToString());
             }
 
             // INITIALIZE TM that he knows
@@ -47,6 +80,7 @@ namespace LeaseManager
                 urls_tm.Add("http://localhost:" + port_tm.ToString());
                 Console.WriteLine("[TM] connected to another TM: " + "http://localhost:" + port_tm.ToString());
                 types.Add(1);
+                all_servers.Add("http://localhost:" + port_tm.ToString());
             }
 
             // WALL BARRIER
@@ -115,6 +149,7 @@ namespace LeaseManager
                 f++;
             }
 
+            /*
             // DEBUG
             int r = 0;
             foreach (List<int> l in failures_per_round)
@@ -136,7 +171,7 @@ namespace LeaseManager
                 }
                 r++;
             }
-
+            */ 
             string startupMessage;
             ServerPort serverPort;
 
@@ -147,7 +182,7 @@ namespace LeaseManager
 
             LearnServicesImpl lrnImpl = new LearnServicesImpl(leaseState);
             PaxosServicesImpl pxsImpl = new PaxosServicesImpl(leaseState);
-            LeaseLogic leaseLogic = new LeaseLogic(leaseState, urls_lm.Concat(urls_tm).ToList(), names_lm.Concat(names_tm).ToList(), types, num_lm, id, 10000);
+            LeaseLogic leaseLogic = new LeaseLogic(leaseState, urls_lm.Concat(urls_tm).ToList(), names_lm.Concat(names_tm).ToList(), types, num_lm, id, number_time_slots,time_slot_duration);
 
             Server server = new Server
             {
@@ -160,7 +195,9 @@ namespace LeaseManager
             Console.WriteLine(startupMessage);
             //Configuring HTTP for client connections in Register method
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            leaseLogic.Loop();
+            leaseLogic.Loop(rounds_of_failure,failures_per_round,idOrder,all_servers);
+
+            // async void Loop(List<int> rounds_of_failure, List<List<int>> failures_per_round,List<int> idOrder, List<int> all_servers) 
         }
     }
 }

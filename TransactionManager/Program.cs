@@ -9,6 +9,25 @@ namespace TransactionManager
         {
             return Int32.Parse(hostname.Split(':')[2]);
         }
+
+        public static Task WaitForTimeAsync(DateTime wantedTimeToStart)
+        {
+            TimeSpan delay = wantedTimeToStart - DateTime.Now;
+
+            if (delay.TotalMilliseconds > 0)
+            {
+                return Task.Delay(delay).ContinueWith((t) =>
+                {
+                    // Continue with your code after the desired time has been reached
+                });
+            }
+            else
+            {
+                // The desired time has already passed; you can handle this case accordingly
+                return Task.CompletedTask;
+            }
+        }
+
         static void Main(string[] args)
         {
 
@@ -17,8 +36,20 @@ namespace TransactionManager
             string LOCALHOST = "localhost";
             int port = getPort(hostname);
 
+            int s = DateTime.Now.Second;
+            int until_next_minute = 60 - s;
+            int m = 1000 - DateTime.Now.Millisecond;
+
+            DateTime wantedTimeToStart = DateTime.Now.AddSeconds(until_next_minute).AddMilliseconds(m); // Replace this with your desired start time
+
+            var task = WaitForTimeAsync(wantedTimeToStart);
+
+            // You can wait for the task to complete using Wait
+            task.Wait();
             // Initialize LM he knows about
             int num_lm = Int32.Parse(args[2]);
+
+            List<string> all_servers = new List<string>();
             List<string> names_lm = new List<string>();
             List<string> urls_lm = new List<string>();
             List<int> types = new List<int>();
@@ -30,6 +61,7 @@ namespace TransactionManager
                 urls_lm.Add("http://localhost:" + port_lm.ToString());
                 Console.WriteLine("[TM] connected to another LM: " + "http://localhost:" + port_lm.ToString());
                 types.Add(1);
+                all_servers.Add("http://localhost:" + port_lm.ToString());
             }
 
             // Initialize TM he knows about
@@ -47,6 +79,7 @@ namespace TransactionManager
                     Console.WriteLine("[TM] connected to another TM: " + "http://localhost:" + port_tm.ToString());
                     types.Add(0);
                 }
+                all_servers.Add("http://localhost:" + port_tm.ToString());
             }
 
             // WALL BARRIER
@@ -115,6 +148,7 @@ namespace TransactionManager
                 f++;
             }
 
+            /*
             // DEBUG
             int r = 0;
             foreach (List<int> l in failures_per_round)
@@ -136,6 +170,7 @@ namespace TransactionManager
                 }
                 r++;
             }
+            */ 
 
             string startupMessage;
             ServerPort serverPort;
@@ -160,7 +195,36 @@ namespace TransactionManager
             Console.WriteLine("[TM] Started tm services server || " + startupMessage);
             //Configuring HTTP for client connections in Register method
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            while (true) ;
+
+            int round_count = 1;
+
+            // TODO: Wait until wall barrier
+            int crash_count = 0;
+            while (round_count < number_time_slots)
+            {
+                if (rounds_of_failure.Contains(round_count))
+                {
+                    foreach (int el in failures_per_round[crash_count])
+                    {
+                        // TODO : CODE FOR THE CRASH
+                        if (el < num_lm + num_tm)
+                        {
+                            Console.WriteLine("[TM TODO CRASH HERE] " + all_servers[idOrder[el]]);
+                        }
+                        else
+                        {
+                            Console.WriteLine("[TM TODO CRASH HERE] " + all_servers[idOrder[0]]);
+                        }
+                        
+                    }
+                    crash_count++;
+
+                }
+                Thread.Sleep(time_slot_duration);
+                round_count++;
+            }
+
+            while (true) { }
 
         }
     }

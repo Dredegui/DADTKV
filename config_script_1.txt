@@ -13,19 +13,14 @@
 # and a URL for g-RPC calls.
 P TM1 T http://1.2.3.4:10000
 P TM2 T http://1.2.3.4:10002
-P TM3 T http://1.2.3.4:10003
 P LeaseManager1 L http://1.2.3.5:10004
 P LM2 L http://1.2.3.5:10008
 P lease3 L http://1.2.3.5:10009
 #
 # A client (indicated by the 'C' process code) does not have a g-RPC URL,
 # but has a path to the client script it is running.
-P client1 C client-script-1
-P c2 C another-script
-P c3 C one_more_script
-P c4 C cs4
-P c5 C cs5
-P c6 C cs6
+P client1 C client-script-1_1
+P c2 C client-script-2_1
 #
 # this test will run for 100 time slots.
 S 100
