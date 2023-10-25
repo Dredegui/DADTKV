@@ -20,9 +20,10 @@ namespace LeaseManager
         private int numLM;
         private int id;
         private int numSlots;
+        private int slotDuration;
 
 
-        public LeaseLogic(LeaseState state, List<string> urls, List<string> names, List<int> types, int numLM, int id, int numSlots)
+        public LeaseLogic(LeaseState state, List<string> urls, List<string> names, List<int> types, int numLM, int id, int numSlots,int slotDuration)
         {
             this.state = state;
             this.urls = urls;
@@ -31,6 +32,7 @@ namespace LeaseManager
             this.numLM = numLM;
             this.id = id;
             this.numSlots = numSlots;
+            this.slotDuration = slotDuration;
         }
 
         public void registerStubs()
@@ -149,17 +151,68 @@ namespace LeaseManager
             }
         }
 
-        public async void Loop()
+        public async void Loop(List<int> rounds_of_failure, List<List<int>> failures_per_round,List<int> idOrder, List<string> all_servers) 
         {
-            int i = 0;
+            int i = 1;
+            int crash_count = 0;
+
+            int num_servers = 0;
+
+            foreach(int s in idOrder)
+            {
+                num_servers++;
+            }
+
             while (i < numSlots)
             {
-                Thread.Sleep(10000);
-                if (i == 0)
+                Thread.Sleep(slotDuration);
+                if (i == 1)
                 {
                     registerStubs();
                     Console.WriteLine("[LM] Register other LM stubs - Its the first time we are doing this so...");
                 }
+
+                // CHECK CRASHES:
+                if (rounds_of_failure.Contains(i))
+                {
+                    Console.Write("DEBUG ID ORDER: ");
+                    foreach (int e in idOrder)
+                    {
+                        Console.Write(e + " ");
+                    }
+                    Console.WriteLine("");
+
+                    Console.Write("DEBUG ID ALL SERVERS: ");
+                    foreach (string e in all_servers)
+                    {
+                        Console.Write(e + " ");
+                    }
+                    Console.WriteLine("");
+
+                    Console.Write("FAIULURES: ");
+                    foreach (int e in failures_per_round[crash_count])
+                    {
+                        Console.Write(e + " ");
+                    }
+                    Console.WriteLine("");
+
+                    foreach (int el in failures_per_round[crash_count])
+                    {
+                        // TODO : MANDAR ABAIXO O SERVIDOR ---> all_servers[idOrder[el-1]]
+                        if (el < num_servers)
+                        {
+                            Console.WriteLine("[LM YYYYYYYYYYYYYYYYYYYYYYYYY] " + all_servers[idOrder[el]]);
+                        }
+                        else
+                        {
+                            Console.WriteLine("[LM YYYYYYYYYYYYYYYYYYYYYYYYY] " + all_servers[idOrder[0]]);
+                        }
+
+                    }
+                    crash_count++;
+                }
+
+
                 if (id == 0) {
                     Console.WriteLine("[LM] I am the leader of this: Let's start PAXOS");
                     StartPaxos();
@@ -169,6 +222,7 @@ namespace LeaseManager
                     state.NextEpoch();
                 }
                 i++;
+                
             }
         }
     }

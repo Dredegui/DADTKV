@@ -16,6 +16,7 @@ namespace LeaseManager
             string LOCALHOST = "localhost";
             int port = getPort(host);
 
+            List<string> all_servers = new List<string>();
             int num_lm = Int32.Parse(args[3]);
 
             // INITIALIZE LM that he knows
@@ -33,6 +34,7 @@ namespace LeaseManager
                     Console.WriteLine("[LM] connected to: " + "http://localhost:" + port_lm.ToString());
                     types.Add(0);
                 }
+                all_servers.Add("http://localhost:" + port_lm.ToString());
             }
 
             // INITIALIZE TM that he knows
@@ -47,6 +49,7 @@ namespace LeaseManager
                 urls_tm.Add("http://localhost:" + port_tm.ToString());
                 Console.WriteLine("[TM] connected to another TM: " + "http://localhost:" + port_tm.ToString());
                 types.Add(1);
+                all_servers.Add("http://localhost:" + port_tm.ToString());
             }
 
             // WALL BARRIER
@@ -115,6 +118,7 @@ namespace LeaseManager
                 f++;
             }
 
+            /*
             // DEBUG
             int r = 0;
             foreach (List<int> l in failures_per_round)
@@ -136,7 +140,7 @@ namespace LeaseManager
                 }
                 r++;
             }
-
+            */ 
             string startupMessage;
             ServerPort serverPort;
 
@@ -147,7 +151,7 @@ namespace LeaseManager
 
             LearnServicesImpl lrnImpl = new LearnServicesImpl(leaseState);
             PaxosServicesImpl pxsImpl = new PaxosServicesImpl(leaseState);
-            LeaseLogic leaseLogic = new LeaseLogic(leaseState, urls_lm.Concat(urls_tm).ToList(), names_lm.Concat(names_tm).ToList(), types, num_lm, id, 10000);
+            LeaseLogic leaseLogic = new LeaseLogic(leaseState, urls_lm.Concat(urls_tm).ToList(), names_lm.Concat(names_tm).ToList(), types, num_lm, id, number_time_slots,time_slot_duration);
 
             Server server = new Server
             {
@@ -160,7 +164,9 @@ namespace LeaseManager
             Console.WriteLine(startupMessage);
             //Configuring HTTP for client connections in Register method
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            leaseLogic.Loop();
+            leaseLogic.Loop(rounds_of_failure,failures_per_round,idOrder,all_servers);
+
+            // async void Loop(List<int> rounds_of_failure, List<List<int>> failures_per_round,List<int> idOrder, List<int> all_servers) 
         }
     }
 }

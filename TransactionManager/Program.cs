@@ -19,6 +19,8 @@ namespace TransactionManager
 
             // Initialize LM he knows about
             int num_lm = Int32.Parse(args[2]);
+
+            List<string> all_servers = new List<string>();
             List<string> names_lm = new List<string>();
             List<string> urls_lm = new List<string>();
             List<int> types = new List<int>();
@@ -30,6 +32,7 @@ namespace TransactionManager
                 urls_lm.Add("http://localhost:" + port_lm.ToString());
                 Console.WriteLine("[TM] connected to another LM: " + "http://localhost:" + port_lm.ToString());
                 types.Add(1);
+                all_servers.Add("http://localhost:" + port_lm.ToString());
             }
 
             // Initialize TM he knows about
@@ -47,6 +50,7 @@ namespace TransactionManager
                     Console.WriteLine("[TM] connected to another TM: " + "http://localhost:" + port_tm.ToString());
                     types.Add(0);
                 }
+                all_servers.Add("http://localhost:" + port_tm.ToString());
             }
 
             // WALL BARRIER
@@ -115,6 +119,7 @@ namespace TransactionManager
                 f++;
             }
 
+            /*
             // DEBUG
             int r = 0;
             foreach (List<int> l in failures_per_round)
@@ -136,6 +141,7 @@ namespace TransactionManager
                 }
                 r++;
             }
+            */ 
 
             string startupMessage;
             ServerPort serverPort;
@@ -160,7 +166,36 @@ namespace TransactionManager
             Console.WriteLine("[TM] Started tm services server || " + startupMessage);
             //Configuring HTTP for client connections in Register method
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            while (true) ;
+
+            int round_count = 1;
+
+            // TODO: Wait until wall barrier
+            int crash_count = 0;
+            while (round_count < number_time_slots)
+            {
+                if (rounds_of_failure.Contains(round_count))
+                {
+                    foreach (int el in failures_per_round[crash_count])
+                    {
+                        // TODO : MANDAR ABAIXO O SERVIDOR ---> all_servers[idOrder[el-1]]
+                        if (el < num_lm + num_tm)
+                        {
+                            Console.WriteLine("[TM XXXXXXXXXXXXXXXXXXXXXXXXXX] " + all_servers[idOrder[el]]);
+                        }
+                        else
+                        {
+                            Console.WriteLine("[TM XXXXXXXXXXXXXXXXXXXXXXXXXX] " + all_servers[idOrder[0]]);
+                        }
+                        
+                    }
+                    crash_count++;
+
+                }
+                Thread.Sleep(time_slot_duration);
+                round_count++;
+            }
+
+            while (true) { }
 
         }
     }

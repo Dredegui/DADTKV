@@ -349,7 +349,7 @@ namespace ConfigScript
             {
                 Console.WriteLine("[CONFIG] LM started with sucess");
                 Process.Start(LM_PATH, i + " " + lm_names_run[i] + " " + lm_hosts_run[i] + " " + num_lm.ToString() + " " + lm_hosts + " " + num_tm.ToString() + " " + tm_hosts + " " +  wall_barrier + " " + time_slot_duration + " " + number_of_time_slots  + " " + buildRealIds() +  " " + buildFailureArguments());
-                Thread.Sleep(300);
+                Thread.Sleep(2000);
             }
             //Thread.Sleep(1000);
             // Create TM 
