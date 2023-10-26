@@ -218,6 +218,23 @@ namespace TransactionManager
                         }
                         
                     }
+                    // CHECK SUSPECTS
+                    for (int k = 0; k < suspects_per_round[crash_count].Count; k += 2)
+                    {
+                        int oq_suspeita = suspects_per_round[crash_count][k] + 1;
+                        int o_suspeito = suspects_per_round[crash_count][k + 1] + 1;
+                        if (oq_suspeita >= num_lm + num_tm)
+                        {
+                            oq_suspeita = 0;
+                        }
+                        if (o_suspeito >= num_lm + num_tm)
+                        {
+                            o_suspeito = 0;
+                        }
+                        Console.WriteLine("[OQ SUSPEITA TAM TAM TAM DO LADO DA FUCKING TM]: " + all_servers[idOrder[oq_suspeita]]);
+                        Console.WriteLine("[O SUSPEITO TUM TUM TUM DO LADO DA FUCKING TM]: " + all_servers[idOrder[o_suspeito]]);
+                    }
+
                     crash_count++;
 
                 }

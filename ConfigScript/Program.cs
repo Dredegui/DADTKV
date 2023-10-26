@@ -173,7 +173,7 @@ namespace ConfigScript
             // CHECK THE CRASHES
             List<int> failures = new List<int>();
             int num_failures_round = 0;
-            while (count <=  all_servers)
+            while (count <  all_servers)
             {
                 split = splitStr(line);
                 string n = split.Item1;
@@ -244,6 +244,7 @@ namespace ConfigScript
                 i += 1;
 
             }
+
             return ret;
         }
         

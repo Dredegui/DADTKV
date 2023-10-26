@@ -151,7 +151,7 @@ namespace LeaseManager
             }
         }
 
-        public async void Loop(List<int> rounds_of_failure, List<List<int>> failures_per_round,List<int> idOrder, List<string> all_servers) 
+        public async void Loop(List<int> rounds_of_failure, List<List<int>> failures_per_round,List<int> idOrder, List<string> all_servers,List<List<int>> suspects_per_round) 
         {
             int i = 1;
             int crash_count = 0;
@@ -177,7 +177,7 @@ namespace LeaseManager
                 {
                     foreach (int el in failures_per_round[crash_count])
                     {
-                        // TODO : MANDAR ABAIXO O SERVIDOR ---> all_servers[idOrder[el-1]]
+                        // TODO : MANDAR ABAIXO O SERVIDOR COM O SEU ID
                         if (el < num_servers)
                         {
                             Console.WriteLine("[LM TODO CRASH HERE] " + all_servers[idOrder[el]]);
@@ -188,8 +188,27 @@ namespace LeaseManager
                         }
 
                     }
+
+                    // CHECK SUSPECTS
+                    for (int k = 0; k < suspects_per_round[crash_count].Count; k+=2) 
+                    {
+                        int oq_suspeita = suspects_per_round[crash_count][k] + 1;
+                        int o_suspeito = suspects_per_round[crash_count][k + 1] + 1;
+                        if (oq_suspeita >= num_servers)
+                        {
+                            oq_suspeita = 0;
+                        }
+                        if (o_suspeito >= num_servers)
+                        {
+                            o_suspeito = 0;
+                        }
+                        Console.WriteLine("[OQ SUSPEITA TAM TAM TAM]: " + all_servers[idOrder[oq_suspeita]]);
+                        Console.WriteLine("[O SUSPEITO TUM TUM TUM]: " + all_servers[idOrder[o_suspeito]]);
+                    }
+
                     crash_count++;
                 }
+
 
 
                 if (id == 0) {
