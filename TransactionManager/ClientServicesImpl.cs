@@ -38,19 +38,18 @@ namespace TransactionManager
 
         public void registerStubs()
         {
-            for (int i = 0; i < names.Count; i++)
+            for (int i = 0; i < urls.Count; i++)
             {
                 GrpcChannel channel = GrpcChannel.ForAddress(urls[i]);
-
                 if (types[i] == 0)
                 {
                     // Transaction Managers stub
-                    stubsTM[names[i]] = new BroadcastServices.BroadcastServicesClient(channel);
+                    stubsTM[urls[i]] = new BroadcastServices.BroadcastServicesClient(channel);
                 }
                 else
                 {
                     // Lease Managers stub
-                    stubsLM[names[i]] = new LearnServices.LearnServicesClient(channel);
+                    stubsLM[urls[i]] = new LearnServices.LearnServicesClient(channel);
                 }
 
             }
@@ -65,6 +64,7 @@ namespace TransactionManager
 
         public bool checkQueue(List<string> reads, List<string> keys)
         {
+            Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + "] CHECK QUEUE");
             foreach (string read in reads)
             {
                 if (state.queue[read][0] != state.GetName())
@@ -80,7 +80,7 @@ namespace TransactionManager
                     return false;
                 }
             }
-
+            Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + "] END CHECK QUEUE");
             return true;
         }
 
@@ -99,6 +99,7 @@ namespace TransactionManager
 
         public bool removeFromQueue(List<string> reads, List<string> keys)
         {
+            Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + "] REMOVING READS");
             foreach (string read in reads)
             {
                 state.queue[read].RemoveAt(0);
@@ -107,7 +108,7 @@ namespace TransactionManager
                     leases.Add(read);
                 }
             }
-
+            Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + "] REMOVING WRITES");
             foreach (string key in keys)
             {
                 if (state.queue[key][0] == state.GetName())
@@ -119,7 +120,7 @@ namespace TransactionManager
                     }
                 }
             }
-
+            Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + "] END REMOVE");
             return true;
         }
 
@@ -131,6 +132,7 @@ namespace TransactionManager
             Thread.Sleep(100);
             bool diff = false;
             LeaseUpdateRequest request = new LeaseUpdateRequest();
+            request.Host = state.hostport;
             foreach (string key in shallowCopy.Keys)
             {
                 if (state.queue[key].Count < shallowCopy[key].Count)
@@ -150,9 +152,15 @@ namespace TransactionManager
                 List<Task<LeaseUpdateReply>> updateAwaitList = new List<Task<LeaseUpdateReply>>();
                 try
                 {
-                    foreach (BroadcastServices.BroadcastServicesClient stub in stubsTM.Values)
+                    foreach (string stubName in stubsTM.Keys)
                     {
-                        updateAwaitList.Add(stub.LeaseUpdateAsync(request).ResponseAsync);
+                        if (!state.suspectList.Contains(stubName))
+                        {
+                            updateAwaitList.Add(stubsTM[stubName].LeaseUpdateAsync(request).ResponseAsync);
+                        } else
+                        {
+                            Console.WriteLine(SPACE + "[" + state.GetName() + "] Ignores because it suspects " + stubName);
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -171,7 +179,7 @@ namespace TransactionManager
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("(ERROR)[TM] Waiting for a result that will never come");
+                        Console.WriteLine(SPACE + "(ERROR)[TM] Waiting for a result that will never come");
                     }
                 }
                 bool removeLease = true;
@@ -193,15 +201,17 @@ namespace TransactionManager
                 {
                     foreach (string lease in request.Leases)
                     {
-                        state.queue[lease].RemoveAt(0);
+                        if (state.queue[lease][0] != state.GetName())
+                        {
+                            state.queue[lease].RemoveAt(0);
+                        }
                     }
                 }
-                
                 // The function thread can pulse and wake up the main thread.
                 lock (state)
                 {
                     Monitor.PulseAll(state);
-                }
+                }               
             }
             else
             {
@@ -268,7 +278,10 @@ namespace TransactionManager
                     try
                     {
                         await learn;
-                        learnResults.Add(learn.Result);
+                        if (learn.Result != null)
+                        {
+                            learnResults.Add(learn.Result);
+                        }
                     }
                     catch (Exception e)
                     {
@@ -306,6 +319,7 @@ namespace TransactionManager
                     lock (state)
                     {
                         Monitor.Wait(state);
+                        Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + "] WOKE UPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP");
                     }
                 }
                 removeFromQueue(reads, keys); // TODO SAME LEASES ON 2 TRANSACTIONS ON SAME TM
@@ -313,12 +327,20 @@ namespace TransactionManager
 
             }
             PermissionRequest permissionRequest = new PermissionRequest();
+            permissionRequest.Host = state.hostport;
             List<Task<PermissionReply>> permissionAwaitList = new List<Task<PermissionReply>>();
             try
             {
-                foreach (var stub in stubsTM.Values)
+                foreach(string stubName in stubsTM.Keys)
                 {
-                    permissionAwaitList.Add(stub.ReceivePermissionAsync(permissionRequest).ResponseAsync);
+                    if (!state.suspectList.Contains(stubName))
+                    {
+                        permissionAwaitList.Add(stubsTM[stubName].ReceivePermissionAsync(permissionRequest).ResponseAsync);
+                    }
+                    else
+                    {
+                        Console.WriteLine("[" + state.GetName() + "] Ignores because it suspects " + stubName);
+                    }
                 }
             }
             catch (Exception ex)
@@ -331,7 +353,7 @@ namespace TransactionManager
                 try
                 {
                     await permission;
-                    if (permission.Result.Value)
+                    if (permission.Result != null && permission.Result.Value)
                     {
                         permissionNum++;
                     }
@@ -382,6 +404,7 @@ namespace TransactionManager
             BroadcastMessage message = new BroadcastMessage();
             message.Id = transcationId;
             message.Name = state.GetName();
+            message.Host = state.hostport;
             message.Keys.AddRange(keys);
             message.Values.AddRange(values);
             message.Reads.AddRange(reads);
@@ -391,9 +414,16 @@ namespace TransactionManager
             List<Task<BroadcastAck>> broadWaitList = new List<Task<BroadcastAck>>();
             try
             {
-                foreach (var stub in stubsTM.Values)
+                foreach (string stubName in stubsTM.Keys)
                 {
-                    broadWaitList.Add(stub.BroadcastAsync(message).ResponseAsync);
+                    if (!state.suspectList.Contains(stubName))
+                    {
+                        broadWaitList.Add(stubsTM[stubName].BroadcastAsync(message).ResponseAsync);
+                    }
+                    else
+                    {
+                        Console.WriteLine("[" + state.GetName() + "] Ignores because it suspects " + stubName);
+                    }
                 }
             } catch (Exception ex)
             {

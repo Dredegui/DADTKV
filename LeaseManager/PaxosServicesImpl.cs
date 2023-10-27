@@ -25,6 +25,10 @@ namespace LeaseManager
 
         public CommitReply CommitImpl(CommitRequest commitRequest)
         {
+            if (state.suspectList.Contains(commitRequest.Host))
+            {
+                return null;
+            }
             Console.WriteLine("[LM] Received a commit request");
             List<LeaseTransaction> consensusOrder = state.GetCurrentLeases();
             state.ClearProposed();
@@ -58,6 +62,10 @@ namespace LeaseManager
 
         public AcceptReply AcceptImpl(AcceptRequest request)
         {
+            if (state.suspectList.Contains(request.Host))
+            {
+                return null;
+            }
             Console.WriteLine("[LM LEARNER] Received a accept request => Check if the the round I promided is the new proposed");
             AcceptReply reply = new AcceptReply();
             Console.WriteLine("[ACCEPT ROUND] proposed: " + request.ProposedRound + " | promisedRound: " + promisedRound);
@@ -93,6 +101,11 @@ namespace LeaseManager
 
         public PrepareReply PrepareImpl(PrepareRequest request)
         {
+            if (state.suspectList.Contains(request.Host))
+            {
+                Console.WriteLine("[LM LEARNER] Ignores because it suspects " + request.Host);
+                return null;
+            }
             Console.WriteLine("[LM LEARNER][ACCEPT ROUND] proposed: " + request.ProposedRound + " | promisedRound: " + promisedRound);
             Console.WriteLine("[LM LEARNER] Received a prepare request");
             PrepareReply reply = new PrepareReply();

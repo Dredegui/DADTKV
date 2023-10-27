@@ -187,7 +187,7 @@ namespace LeaseManager
             ServerPort serverPort;
 
 
-            LeaseState leaseState = new LeaseState();
+            LeaseState leaseState = new LeaseState("http://localhost:" + port);
             serverPort = new ServerPort(LOCALHOST, port, ServerCredentials.Insecure);
             startupMessage = $"[LM{YOUR_ID}]Insecure ChatServer server listening on port " + port;
 

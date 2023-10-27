@@ -9,6 +9,7 @@ namespace TransactionManager
     public class ServerState
     {
         private Dictionary<string, int> DadInts = new Dictionary<string, int>();
+        public string hostport;
         public int transId = 0;
         public Dictionary<string, List<string>> queue = new Dictionary<string, List<string>>();
         static string SPACE = "                                    ";
@@ -19,9 +20,10 @@ namespace TransactionManager
 
         private string name;
 
-        public ServerState(string name)
+        public ServerState(string name, string hostport)
         {
             this.name = name;
+            this.hostport = hostport;
         }
 
         public bool ValidKey(string key)

@@ -24,6 +24,11 @@ namespace TransactionManager
 
         public PermissionReply ReceivePermissionImpl(PermissionRequest request)
         {
+            if (state.suspectList.Contains(request.Host))
+            {
+                Console.WriteLine("[" + state.GetName() + "] IGNORE " + request.Host);
+                return null;
+            }
             PermissionReply reply = new PermissionReply();
             reply.Value = true;
             return reply;
@@ -35,6 +40,11 @@ namespace TransactionManager
 
         public BroadcastAck BroadcastImpl(BroadcastMessage message)
         {
+            if (state.suspectList.Contains(message.Name))
+            {
+                Console.WriteLine("[" + state.GetName() + "] IGNORE " + message.Name);
+                return null;
+            }
             // Write operation
             List<string> keys = message.Keys.ToList();
             List<int> values = message.Values.ToList();
@@ -76,6 +86,11 @@ namespace TransactionManager
         }
         public LeaseUpdateReply LeaseUpdateImpl(LeaseUpdateRequest request)
         {
+            if (state.suspectList.Contains(request.Host))
+            {
+                Console.WriteLine("[" + state.GetName() + "] IGNORE " + request.Host);
+                return null;
+            }
             LeaseUpdateReply reply = new LeaseUpdateReply();
             reply.Ack = false;
             List<string> leases = request.Leases.ToList();

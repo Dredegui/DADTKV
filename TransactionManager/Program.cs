@@ -164,7 +164,7 @@ namespace TransactionManager
             ServerPort serverPort;
 
 
-            ServerState serverState = new ServerState(name);
+            ServerState serverState = new ServerState(name, "http://localhost:" + port);
             serverPort = new ServerPort(LOCALHOST, port, ServerCredentials.Insecure);
             startupMessage = "[TM]Insecure ChatServer server listening on port " + port;
 
@@ -237,7 +237,8 @@ namespace TransactionManager
                         //Console.WriteLine("[O SUSPEITO TUM TUM TUM DO LADO DA FUCKING TM]: " + all_servers[idOrder[o_suspeito]]);
                         if (idOrder[oq_suspeita] == YOUR_ID)
                         {
-                            serverState.addSuspect(all_names[idOrder[o_suspeito]]);
+                            Console.WriteLine(SPACE + "["+ serverState.GetName() + "][" + all_servers[idOrder[oq_suspeita]] + "] ** NEW SUSPECT** -> " + all_servers[idOrder[o_suspeito]]);
+                            serverState.addSuspect(all_servers[idOrder[o_suspeito]]);
                         }
 
                     }

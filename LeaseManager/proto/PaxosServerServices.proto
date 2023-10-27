@@ -12,7 +12,8 @@ message Request {
 }
 
 message PrepareRequest {
-	int32 proposed_round = 1;
+	string host = 1;
+	int32 proposed_round = 2;
 }
 
 message PrepareReply{
@@ -22,8 +23,9 @@ message PrepareReply{
 }
 
 message AcceptRequest {
-	int32 proposed_round = 1;
-	repeated Request values = 2;
+	string host = 1;
+	int32 proposed_round = 2;
+	repeated Request values = 3;
 }
 
 message AcceptReply {
@@ -31,7 +33,8 @@ message AcceptReply {
 }
 
 message CommitRequest {
-	int32 epoch = 1;
+	string host = 1;
+	int32 epoch = 2;
 }
 
 message CommitReply {

@@ -38,8 +38,12 @@ namespace Client
             string replyToString = "";
             for (int i = 0; i < reply.Keys.Count; i++)
             {
+                if (reply.Keys[i] == "Abort")
+                {
+                    replyToString += SPACE + "[CLI RESULTS] " + reply.Keys[i] + " |\n";
+                    break;
+                } 
                 replyToString += SPACE + "[CLI RESULTS] " + reply.Keys[i] + ": " + reply.Values[i] + " |\n";
-
             }
             Console.WriteLine(SPACE + "[CLI] Received a transaction response with sucess:\n" + replyToString);
         }

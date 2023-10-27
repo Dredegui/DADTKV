@@ -37,30 +37,30 @@ namespace LeaseManager
 
         public void registerStubs()
         {
-            for (int i = 0; i < names.Count; i++)
+            for (int i = 0; i < urls.Count; i++)
             {
                 try
                 {
                     GrpcChannel channel = GrpcChannel.ForAddress(urls[i]);
                     if (types[i] == 0)
                     {
-                        stubsLM[names[i]] = new PaxosConsensusServices.PaxosConsensusServicesClient(channel);
+                        stubsLM[urls[i]] = new PaxosConsensusServices.PaxosConsensusServicesClient(channel);
                     }
                     else
                     {
-                        state.stubsTM[names[i]] = new LeaseInformServices.LeaseInformServicesClient(channel);
+                        state.stubsTM[urls[i]] = new LeaseInformServices.LeaseInformServicesClient(channel);
                     }
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine("(ERROR)[LM " + id + "] Trying to register a LM that is unavailable");
-                    names.RemoveAt(i);
-                    if (stubsLM.ContainsKey(names[i]))
+                    urls.RemoveAt(i);
+                    if (stubsLM.ContainsKey(urls[i]))
                     {
-                        stubsLM.Remove(names[i]);
-                    } else if (state.stubsTM.ContainsKey(names[i]))
+                        stubsLM.Remove(urls[i]);
+                    } else if (state.stubsTM.ContainsKey(urls[i]))
                     {
-                        state.stubsTM.Remove(names[i]);
+                        state.stubsTM.Remove(urls[i]);
                     }
                     i--;
                 }
@@ -71,6 +71,7 @@ namespace LeaseManager
         {
             Console.WriteLine("[LM " + id + "LEADER] Building prepare request");
             PrepareRequest replyRequest = new PrepareRequest();
+            replyRequest.Host = state.hostport;
             int currentEpoch = state.GetEpoch();
             replyRequest.ProposedRound = currentEpoch;
             int counter = 0;
@@ -79,10 +80,16 @@ namespace LeaseManager
             state.ClearProposed();
             try
             {
-                foreach (string name in stubsLM.Keys)
+                foreach (string stubName in stubsLM.Keys)
                 {
-                    Console.WriteLine("[LM LEADER " + id + "] Sending async PREPARE REQUESTS for every LM " + name);
-                    replyAwaitList.Add(stubsLM[name].PrepareAsync(replyRequest).ResponseAsync);
+                    Console.WriteLine("[LM LEADER " + id + "] Sending async PREPARE REQUESTS for every LM " + stubName);
+                    if (!state.suspectList.Contains(stubName))
+                    {
+                        replyAwaitList.Add(stubsLM[stubName].PrepareAsync(replyRequest).ResponseAsync);
+                    } else
+                    {
+                        Console.WriteLine("[LM LEADER " + id + "] Ignores because it suspects " + stubName);
+                    }
                     // Use prepare reply info 
                 }
             } catch (Exception e)
@@ -96,7 +103,10 @@ namespace LeaseManager
                 try
                 {
                     await reply;
-                    prepareResults.Add(reply.Result);
+                    if (reply.Result != null)
+                    {
+                        prepareResults.Add(reply.Result);
+                    }
                 } catch (Exception e)
                 {
                     Console.WriteLine("(ERROR)[LM LEADER " + id + "] Waiting for a response that will never exist");
@@ -119,6 +129,7 @@ namespace LeaseManager
                 // Start accept requests
                 // Build request
                 AcceptRequest acceptRequest = new AcceptRequest();
+                acceptRequest.Host = state.hostport;
                 acceptRequest.ProposedRound = currentEpoch;
                 Console.WriteLine("[LM LEADER " + id + "] Building the accepted list for other LMs");
                 foreach (LeaseTransaction lt in commitedOrder)
@@ -133,9 +144,12 @@ namespace LeaseManager
                 List<Task<AcceptReply>> acceptAwaitList = new List<Task<AcceptReply>>();
                 try
                 {
-                    foreach (string name in stubsLM.Keys)
+                    foreach (string stubName in stubsLM.Keys)
                     {
-                        acceptAwaitList.Add(stubsLM[name].AcceptAsync(acceptRequest).ResponseAsync);
+                        if (!state.suspectList.Contains(stubName))
+                        {
+                            acceptAwaitList.Add(stubsLM[stubName].AcceptAsync(acceptRequest).ResponseAsync);
+                        }
                         // Use prepare reply info 
                     }
                 } catch (Exception e) {
@@ -149,7 +163,10 @@ namespace LeaseManager
                     try
                     {
                         await reply;
-                        acceptResults.Add(reply.Result);
+                        if (reply.Result != null)
+                        {
+                            acceptResults.Add(reply.Result);
+                        }
                     }
                     catch (Exception e)
                     {
@@ -175,12 +192,16 @@ namespace LeaseManager
                         state.Accept();
                         state.AcceptLeases(commitedOrder);
                         CommitRequest request = new CommitRequest();
+                        request.Host = state.hostport;
                         request.Epoch = currentEpoch;
                         try
                         {
-                            foreach (var stub in stubsLM.Values)
+                            foreach (string stubName in stubsLM.Keys)
                             {
-                                stub.CommitAsync(request);
+                                if (!state.suspectList.Contains(stubName))
+                                {
+                                    stubsLM[stubName].CommitAsync(request);
+                                }
                             }
                         } catch (Exception ex)
                         {
@@ -285,8 +306,8 @@ namespace LeaseManager
                         //Console.WriteLine("[O SUSPEITO TUM TUM TUM DO LADO DA FUCKING TM]: " + all_servers[idOrder[o_suspeito]]);
                         if (idOrder[oq_suspeita] == YOUR_ID)
                         {
-                            Console.WriteLine("[LM " + id + "][" + all_servers[idOrder[oq_suspeita]] + "] ** NEW SUSPECT** -> " + all_names[idOrder[o_suspeito]]);
-                            state.addSuspect(all_names[idOrder[o_suspeito]]);
+                            Console.WriteLine("[LM " + id + "][" + all_servers[idOrder[oq_suspeita]] + "] ** NEW SUSPECT** -> " + all_servers[idOrder[o_suspeito]]);
+                            state.addSuspect(all_servers[idOrder[o_suspeito]]);
                         }
 
                     }

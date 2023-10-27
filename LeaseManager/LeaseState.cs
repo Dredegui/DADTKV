@@ -12,13 +12,15 @@ namespace LeaseManager
     {
         private int epoch = 0;
         private int acceptedRound = -1;
+        public string hostport;
         private List<LeaseTransaction> currentLeases = new List<LeaseTransaction>();
         private List<LeaseTransaction> proposedLeases = new List<LeaseTransaction>();
         public Dictionary<string, LeaseInformServices.LeaseInformServicesClient> stubsTM = new Dictionary<string, LeaseInformServices.LeaseInformServicesClient>();
         public List<string> suspectList = new List<string>();
 
-        public LeaseState()
+        public LeaseState(string hostport)
         {
+            this.hostport = hostport;
         }
 
         public void NextEpoch()
