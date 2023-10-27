@@ -4,7 +4,7 @@
     {
 
         private static string RELATIVE_PATH = @"..\..\..\..\Client\scriptsCLI\";
-
+        static string SPACE = "                                                                        ";
         private static int getPort(string hostname)
         {
             return Int32.Parse(hostname.Split(':')[2]);
@@ -57,13 +57,12 @@
             {
                 tms.Add("NO_NAME_YET");
                 int port = getPort(args[4 + i]);
-                Console.WriteLine("[CLI] New connection with TM http://localhost:" + port.ToString());
                 urls.Add("http://localhost:" + port.ToString());
             }
 
+            Console.WriteLine(SPACE + "[CLI] Created connections with every TM with sucess");
 
-
-            Console.WriteLine("[CLI] Started to run a client");
+            Console.WriteLine(SPACE + "[CLI] Running client script");
 
             ClientLogic client = new ClientLogic(name, chosen_tm, tms, urls);
             ClientLoop CLI = new ClientLoop(RELATIVE_PATH + script_name + ".txt",client);

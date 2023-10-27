@@ -64,7 +64,6 @@ namespace LeaseManager
                 {
                     names_lm.Add("lm" + i.ToString());
                     urls_lm.Add("http://localhost:" + port_lm.ToString());
-                    Console.WriteLine("[LM] connected to: " + "http://localhost:" + port_lm.ToString());
                     types.Add(0);
                     all_names.Add("lm" + i.ToString());
                 }
@@ -86,11 +85,12 @@ namespace LeaseManager
                 int port_tm = getPort(args[5 + num_lm + i]);
                 names_tm.Add("tm" + i.ToString());
                 urls_tm.Add("http://localhost:" + port_tm.ToString());
-                Console.WriteLine("[TM] connected to another TM: " + "http://localhost:" + port_tm.ToString());
                 types.Add(1);
                 all_servers.Add("http://localhost:" + port_tm.ToString());
                 all_names.Add("tm" + i.ToString());
             }
+
+            Console.WriteLine($"[LM{YOUR_ID}] Created connections with every tm and lm with sucess");
 
             // WALL BARRIER
             string wall_barrier = args[5 + num_lm + num_tm];
@@ -189,7 +189,7 @@ namespace LeaseManager
 
             LeaseState leaseState = new LeaseState();
             serverPort = new ServerPort(LOCALHOST, port, ServerCredentials.Insecure);
-            startupMessage = "Insecure ChatServer server listening on port " + port;
+            startupMessage = $"[LM{YOUR_ID}]Insecure ChatServer server listening on port " + port;
 
             LearnServicesImpl lrnImpl = new LearnServicesImpl(leaseState);
             PaxosServicesImpl pxsImpl = new PaxosServicesImpl(leaseState);

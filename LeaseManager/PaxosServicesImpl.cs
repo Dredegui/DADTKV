@@ -46,8 +46,7 @@ namespace LeaseManager
                 }
             } catch (Exception ex)
             {
-                Console.WriteLine("[LM LEARNER] EXCEPTIONALLAESESESESES");
-                Console.WriteLine(ex.ToString());
+                Console.WriteLine("(ERROR)[LM LEARNER] Couldnt Broadcast using the stub");
             }
             CommitReply reply = new CommitReply();
             return reply;
@@ -94,8 +93,8 @@ namespace LeaseManager
 
         public PrepareReply PrepareImpl(PrepareRequest request)
         {
-            Console.WriteLine("[ACCEPT ROUND] proposed: " + request.ProposedRound + " | promisedRound: " + promisedRound);
-            Console.WriteLine("[LM LEANER] Received a prepare request");
+            Console.WriteLine("[LM LEARNER][ACCEPT ROUND] proposed: " + request.ProposedRound + " | promisedRound: " + promisedRound);
+            Console.WriteLine("[LM LEARNER] Received a prepare request");
             PrepareReply reply = new PrepareReply();
             if (request.ProposedRound > promisedRound)
             {

@@ -54,7 +54,7 @@ namespace LeaseManager
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("[LM REGISTER] EXFAOSRFPEORAS");
+                    Console.WriteLine("(ERROR)[LM] Trying to register a LM that is unavailable");
                     names.RemoveAt(i);
                     if (stubsLM.ContainsKey(names[i]))
                     {
@@ -66,7 +66,6 @@ namespace LeaseManager
                     i--;
                 }
             }
-            Console.WriteLine("End register");
         }
 
         public async void StartPaxos()
@@ -89,7 +88,7 @@ namespace LeaseManager
                 }
             } catch (Exception e)
             {
-                Console.WriteLine("[LM LEADER] EXPTIONISDKASRTSIKJ");
+                Console.WriteLine("(ERROR)[LM LEADER] Couldnt send the prepare request for at least one LM");
             }
             Console.WriteLine("[LM LEADER] Waiting for every prepare reply => Waiting for every LM");
             List<PrepareReply> prepareResults = new List<PrepareReply>();
@@ -101,7 +100,7 @@ namespace LeaseManager
                     prepareResults.Add(reply.Result);
                 } catch (Exception e)
                 {
-                    Console.WriteLine("MI MADRE ME CHUPPU CONA");
+                    Console.WriteLine("(ERROR)[LM LEADER] Waiting for a response that will never exist");
                 }
             }
             Console.WriteLine("[LM LEADER] Waited for every process with sucess");
@@ -141,8 +140,7 @@ namespace LeaseManager
                         // Use prepare reply info 
                     }
                 } catch (Exception e) {
-                    Console.WriteLine("[LM LEADER] AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH");
-                    Console.WriteLine(e.ToString());
+                    Console.WriteLine("(ERROR)[LM LEADER] Tried to reach a LM that closed the connection");
                 }
                 List<AcceptReply> acceptResults = new List<AcceptReply>();
                 Console.WriteLine("[LM LEADER] Waiting for every LM to accept my accepted list");
@@ -156,7 +154,7 @@ namespace LeaseManager
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("MI MADRE ME CHUPPU CONA");
+                        Console.WriteLine("[LM LEADER] One of the LMs is compromised");
                     }
                 }
                 // Count all the acks
@@ -187,20 +185,19 @@ namespace LeaseManager
                             }
                         } catch (Exception ex)
                         {
-                            Console.WriteLine("[LM LEADER] EXPTIOCNASLDEASKLEHJASESAEIJESOIJOIJ");
-                            Console.WriteLine(ex.ToString());
+                            Console.WriteLine("(ERROR)[LM LEADER] Tried to reach a LM that closed the connection");
                         }
                     }
                 }
                 else
                 {
-                    Console.WriteLine("[LM LEADER] Not everyone accepted my accept request //TODO: Ainda não resolvemos isto");
+                    Console.WriteLine("[LM LEADER] Not everyone accepted my accept request (try again)");
                 }
                 // TODO Else where the majority didn't accept and it need to retry
             }
             else
             {
-                Console.WriteLine("[LM LEADER] Don't have the majoraty //TODO: Ainda não resolvemos este caso");
+                Console.WriteLine("[LM LEADER] Don't have the majoraty (try again)");
             }
         }
 
@@ -236,7 +233,7 @@ namespace LeaseManager
                             
                             if ("http://localhost:" + port == all_servers[idOrder[el]])
                             {
-                                Console.WriteLine(">>>>>>>>>>>>>>>>>>>>>>>> [LM] Crashing Transaction manager server... my host is: " + all_servers[idOrder[el]]);
+                                Console.WriteLine("XXXXX NEW CRASH hostname: " + all_servers[idOrder[el]] + "XXXXX");
                                 server.ShutdownAsync().Wait();
                                 return;
                             }
@@ -247,7 +244,7 @@ namespace LeaseManager
 
                             if ("http://localhost:" + port == all_servers[idOrder[el]])
                             {
-                                Console.WriteLine(">>>>>>>>>>>>>>>>>>> [LM] Crashing Transaction manager server... my host is: " + all_servers[idOrder[0]]);
+                                Console.WriteLine("XXXXX NEW CRASH hostname: " + all_servers[idOrder[0]] + " XXXXX");
                                 server.ShutdownAsync().Wait();
                                 return;
                             }
@@ -269,8 +266,6 @@ namespace LeaseManager
                         {
                             o_suspeito = 0;
                         }
-                        Console.WriteLine("[OQ SUSPEITA TAM TAM TAM]: " + all_servers[idOrder[oq_suspeita]]);
-                        Console.WriteLine("[O SUSPEITO TUM TUM TUM]: " + all_servers[idOrder[o_suspeito]]);
                     }
 
                     // CHECK SUSPECTS
@@ -291,7 +286,7 @@ namespace LeaseManager
                         //Console.WriteLine("[O SUSPEITO TUM TUM TUM DO LADO DA FUCKING TM]: " + all_servers[idOrder[o_suspeito]]);
                         if (idOrder[oq_suspeita] == YOUR_ID)
                         {
-                            Console.WriteLine("********************** MALTINHA eu sou o " + all_servers[idOrder[oq_suspeita]] + " e acho que este gajo tá bugadinho: " + all_names[idOrder[o_suspeito]]);
+                            Console.WriteLine("[LM][" + all_servers[idOrder[oq_suspeita]] + "] ** NEW SUSPECT** -> " + all_names[idOrder[o_suspeito]]);
                             state.addSuspect(all_names[idOrder[o_suspeito]]);
                         }
 
@@ -300,9 +295,6 @@ namespace LeaseManager
 
                     crash_count++;
                 }
-
-                Console.WriteLine("ESTE É O MEU ID MEU CARO" + id);
-
                 if (id == i%numLM) {
                     Console.WriteLine("[LM] I am the leader of this: Let's start PAXOS");
                     StartPaxos();

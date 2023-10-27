@@ -1,11 +1,12 @@
-﻿using System.Runtime.ConstrainedExecution;
+﻿using System.Net.Sockets;
+using System.Runtime.ConstrainedExecution;
 using Grpc.Core;
 
 namespace TransactionManager
 {
     internal class Program
     {
-
+        static string SPACE = "                                    ";
         private static int getPort(string hostname)
         {
             return Int32.Parse(hostname.Split(':')[2]);
@@ -62,7 +63,6 @@ namespace TransactionManager
                 int port_lm = getPort(args[3 + i]);
                 names_lm.Add("lm" + i.ToString());
                 urls_lm.Add("http://localhost:" + port_lm.ToString());
-                Console.WriteLine("[TM] connected to another LM: " + "http://localhost:" + port_lm.ToString());
                 types.Add(1);
                 all_servers.Add("http://localhost:" + port_lm.ToString());
                 all_names.Add("lm" + i.ToString());
@@ -80,7 +80,6 @@ namespace TransactionManager
                 {
                     names_tm.Add("tm" + i.ToString());
                     urls_tm.Add("http://localhost:" + port_tm.ToString());
-                    Console.WriteLine("[TM] connected to another TM: " + "http://localhost:" + port_tm.ToString());
                     types.Add(0);
                     all_names.Add("tm" + i.ToString());
                     
@@ -92,6 +91,8 @@ namespace TransactionManager
                 }
                 all_servers.Add("http://localhost:" + port_tm.ToString());
             }
+
+            Console.WriteLine(SPACE + "[TM]Created connections with every tm and lm with sucess");
 
             // WALL BARRIER
             string wall_barrier = args[3 + num_lm + 1 + num_tm];
@@ -165,7 +166,7 @@ namespace TransactionManager
 
             ServerState serverState = new ServerState(name);
             serverPort = new ServerPort(LOCALHOST, port, ServerCredentials.Insecure);
-            startupMessage = "Insecure ChatServer server listening on port " + port;
+            startupMessage = "[TM]Insecure ChatServer server listening on port " + port;
 
             BroadcastServicesImpl brdImpl = new BroadcastServicesImpl(serverState);
             LeaseBroadcastImpl lsImpl = new LeaseBroadcastImpl(serverState);
@@ -179,7 +180,7 @@ namespace TransactionManager
 
             
             server.Start();
-            Console.WriteLine("[TM] Started tm services server || " + startupMessage);
+            Console.WriteLine(SPACE + startupMessage);
             //Configuring HTTP for client connections in Register method
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
@@ -202,17 +203,16 @@ namespace TransactionManager
                         {
                             if ("http://localhost:" + port == all_servers[idOrder[el]])
                             {
-                                Console.WriteLine("[TM] Crashing Transaction manager server... my host is: " + all_servers[idOrder[el]]);
+                                Console.WriteLine(SPACE + "XXXXX NEW CRASH -> " + all_servers[idOrder[el]] + "XXXXX");
                                 server.ShutdownAsync().Wait();
                                 return;
                             }
                         }
                         else
                         {
-                            Console.WriteLine("[TM TODO CRASH HERE] " + all_servers[idOrder[0]]);
                             if ("http://localhost:" + port == all_servers[idOrder[el]])
                             {
-                                Console.WriteLine("[TM] Crashing Transaction manager server... my host is: " + all_servers[idOrder[0]]);
+                                Console.WriteLine(SPACE + "XXXXX NEW CRASH -> " + all_servers[idOrder[0]] + "XXXXX");
                                 server.ShutdownAsync().Wait();
                                 return;
                             }

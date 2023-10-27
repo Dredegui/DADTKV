@@ -9,6 +9,7 @@ namespace Client
 {
     public class ClientLogic
     {
+        static string SPACE = "                                                                        ";
         private readonly string name;
         private int chosen;
         private readonly GrpcChannel channel;
@@ -33,21 +34,14 @@ namespace Client
             request.Reads.AddRange(reads);
             request.Keys.AddRange(keys);
             request.Values.AddRange(values);
-            SubmitReply reply = null;
-            try { 
-                reply = stub.Submit(request);
-            } catch (Exception ex)
-            {
-                Console.WriteLine("[CLI] EXCEPTIONELGAYS");
-                Console.WriteLine(ex.ToString());
-            }
+            SubmitReply reply = stub.Submit(request);
             string replyToString = "";
             for (int i = 0; i < reply.Keys.Count; i++)
             {
                 replyToString += "[CLI RESULTS] " + reply.Keys[i] + ": " + reply.Values[i] + " |\n";
 
             }
-            Console.WriteLine("[CLI] Received a transaction response with sucess:\n" + replyToString);
+            Console.WriteLine(SPACE + "[CLI] Received a transaction response with sucess:\n" + replyToString);
         }
     }
 }

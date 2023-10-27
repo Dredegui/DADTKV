@@ -11,6 +11,7 @@ namespace TransactionManager
         private Dictionary<string, int> DadInts = new Dictionary<string, int>();
         public int transId = 0;
         public Dictionary<string, List<string>> queue = new Dictionary<string, List<string>>();
+        static string SPACE = "                                    ";
 
         public List<string> suspectList = new List<string>();
 
@@ -54,7 +55,7 @@ namespace TransactionManager
         public void printState()
         {
             foreach (var kvp in DadInts) {
-                Console.WriteLine("[TM] INTERNAL STATE >> Key: " + kvp.Key + "| Val: " + kvp.Value);
+                Console.WriteLine(SPACE  + "[TM] INTERNAL STATE >> Key: " + kvp.Key + "| Val: " + kvp.Value);
             }
 
         }

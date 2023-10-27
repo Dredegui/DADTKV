@@ -10,7 +10,7 @@ namespace TransactionManager
     internal class LeaseBroadcastImpl : LeaseInformServices.LeaseInformServicesBase
     {
         private ServerState state;
-
+        static string SPACE = "                                    ";
 
         public LeaseBroadcastImpl(ServerState state)
         {
@@ -43,12 +43,12 @@ namespace TransactionManager
         {
             lock (state)
             {
-                Console.WriteLine("[" + state.GetName() + "] Received a Inform request");
+                Console.WriteLine(SPACE + "[" + state.GetName() + "] Received a Inform request");
                 // Build queue
-                Console.WriteLine("[" + state.GetName() + "] RECEIVED EPOCH: " + request.Epoch + " | CURRENT SAVED EPOCH: " + state.epoch);
+                Console.WriteLine(SPACE + "[" + state.GetName() + "] RECEIVED EPOCH: " + request.Epoch + " | CURRENT SAVED EPOCH: " + state.epoch);
                 if (request.Epoch > state.epoch) // TODO IMPROVE ORDER, WE COULD HAVE 3, RECEIVE 5, AND SKIP 4, WE DON'T WANT THIS
                 {
-                    Console.WriteLine("[" + state.GetName() + "] BUILD QUEUE");
+                    Console.WriteLine(SPACE + "[" + state.GetName() + "] BUILD QUEUE");
                     buildQueue(request);
                     // Pulse all
                     Monitor.PulseAll(state);
