@@ -10,7 +10,7 @@ namespace TransactionManager
     internal class BroadcastServicesImpl : BroadcastServices.BroadcastServicesBase
     {
         private ServerState state;
-
+        static string SPACE = "                                    ";
 
         public BroadcastServicesImpl(ServerState state)
         {
@@ -44,7 +44,7 @@ namespace TransactionManager
                 for (int i = 0; i < keys.Count; i++)
                 {
                     string key = keys[i];
-                    Console.WriteLine("Received length: " + lengths[i] + " | Current Length: " + state.queue[key].Count);
+                    Console.WriteLine(SPACE + "[TM] Received length: " + lengths[i] + " | Current Length: " + state.queue[key].Count);
                     if (lengths[i] + 1 == state.queue[key].Count)
                     {
                         state.SetValue(key, values[i]);
@@ -64,7 +64,7 @@ namespace TransactionManager
                 }
                 Monitor.PulseAll(state);
             }
-            Console.WriteLine("[TM] My service is completed: Pinging other TM that might be waiting for the queue");
+            Console.WriteLine(SPACE + "[TM] My service is completed: Pinging other TM that might be waiting for the queue");
             BroadcastAck ack = new BroadcastAck();
             ack.Value = true;
             return ack;

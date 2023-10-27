@@ -21,7 +21,7 @@ namespace TransactionManager
         private List<string> names;
         private List<string> urls;
         private List<int> types;
-
+        static string SPACE = "                                    ";
         public ClientServicesImpl(ServerState state, List<string> names, List<string> urls, List<int> types)
         {
             this.state = state;
@@ -125,21 +125,14 @@ namespace TransactionManager
 
         private async void TimerThread(Object queue)
         {
-            Console.WriteLine("[" + state.GetName() + transcationId + " TIMER] STARTED");
             Dictionary<string, List<string>> shallowCopy = (Dictionary<string, List<string>>)queue;
             
-            foreach (string ls in shallowCopy.Keys)
-            {
-                Console.WriteLine(ls);
-                Console.WriteLine(shallowCopy[ls].Count);
-            }
             // Simulate some work in the function thread.
             Thread.Sleep(100);
             bool diff = false;
             LeaseUpdateRequest request = new LeaseUpdateRequest();
             foreach (string key in shallowCopy.Keys)
             {
-                Console.WriteLine("Key: " + key + " | Current length: " + state.queue[key].Count + " | Old length: " + shallowCopy[key].Count);
                 if (state.queue[key].Count < shallowCopy[key].Count)
                 {
                     diff = true;
@@ -152,7 +145,7 @@ namespace TransactionManager
             }
             if (!diff)
             {
-                Console.WriteLine("[" + state.GetName() + transcationId + " TIMER] Timer handling started");
+                Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + " TIMER] Timer handling started");
                 // Broadcast leases to see if there is an invalid tm
                 List<Task<LeaseUpdateReply>> updateAwaitList = new List<Task<LeaseUpdateReply>>();
                 try
@@ -164,10 +157,10 @@ namespace TransactionManager
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] EXCEPTIONESSSSSSSSSSSSSSSSSSSSSSSSSS");
+                    Console.WriteLine(SPACE + "(ERROR)[" + state.GetName() + " id: " + transcationId + "] Trying to use a stub that is unavailable");
                     Console.WriteLine(ex.ToString());
                 }
-                Console.WriteLine("[" + state.GetName() + transcationId + "] Waiting for every TM to respond");
+                Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + "] Waiting for every TM to respond");
                 List<LeaseUpdateReply> updateResults = new List<LeaseUpdateReply>();
                 foreach (Task<LeaseUpdateReply> update in updateAwaitList)
                 {
@@ -178,7 +171,7 @@ namespace TransactionManager
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("MI MADRE ME CHUPPU CONA");
+                        Console.WriteLine("(ERROR)[TM] Waiting for a result that will never come");
                     }
                 }
                 bool removeLease = true;
@@ -212,7 +205,7 @@ namespace TransactionManager
             }
             else
             {
-                Console.WriteLine("[" + state.GetName() + transcationId + " TIMER] Already received transaction broadcast");
+                Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + " TIMER] Timer was not activited - Everything is OK");
             }
             
         }
@@ -227,7 +220,7 @@ namespace TransactionManager
                 {
                     vals += val + ", ";
                 }
-                Console.WriteLine("[" + state.GetName() + transcationId + "]" + pos + "key: " + key + "| list: " + vals);
+                Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + "]" + pos + "key: " + key + "| list: " + vals);
             }
         }
 
@@ -235,12 +228,11 @@ namespace TransactionManager
         {
             transcationId = state.transId;
             state.transId = transcationId + 1;
-            Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Start a submit request");
+            Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Start a submit request");
             if (counter == 0)
             {
-                Console.WriteLine("");
                 this.registerStubs();
-                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Registed stubs for another TM and LM");
+                Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Registed stubs for another TM and LM");
                 counter++;
             }
             
@@ -252,7 +244,7 @@ namespace TransactionManager
             List<string> transactionLeases = reads.Concat(keys).Distinct().ToList();
             if (!checkLeases(reads, keys))
             { 
-                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Dont have the Lease for the request of the client => Build new request for LM");
+                Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Dont have the Lease for the request of the client => Build new request for LM");
                 LearnRequest learnRequest = new LearnRequest();
                 learnRequest.Tm = state.GetName();
                 learnRequest.Leases.AddRange(transactionLeases);
@@ -261,16 +253,15 @@ namespace TransactionManager
                 {
                     foreach (LearnServices.LearnServicesClient stub in stubsLM.Values)
                     {
-                        Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "]         >>>> Sendind request for a LM");
+                        Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Sending lease requests for LM");
                         learnAwaitList.Add(stub.LearnAsync(learnRequest).ResponseAsync);
                     }
                 } catch (Exception ex)
                 {
-                    Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] EXCEPTIONESSSSSSSSSSSSSSSSSSSSSSSSSS");
-                    Console.WriteLine(ex.ToString());
+                    Console.WriteLine(SPACE + "(ERROR)[" + state.GetName() + " id: " + transcationId + "] Trying to request a Lease to an LM that is CRASHED");
                 }
                 
-                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Waiting for every LM to respond");
+                Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Waiting for every LM to respond");
                 List<LearnReply> learnResults = new List<LearnReply>();
                 foreach (Task<LearnReply> learn in learnAwaitList)
                 {
@@ -281,23 +272,22 @@ namespace TransactionManager
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("MI MADRE ME CHUPPU CONA");
+                        Console.WriteLine("(ERROR)[TM] Trying to wait for an LM that is CRASHED");
                     }
                 }
-                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Waited for learn ACKS");
+                Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Waited for learn ACKS");
                 
-                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] NUMBER OF ACKS: " + learnResults.Count);
+                Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] NUMBER OF ACKS: " + learnResults.Count);
                 // Wait for lease inform broadcast
                 lock (state)
                 {
                     do
                     {
                         Monitor.Wait(state);
-                        Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] INNN DO WHILEEEEEEEEEEEEEEEEEEEEE");
                     } while (!checkMyLeases(transactionLeases));
                 }
                 // save our leases TODO Ver com stor (libertar sempre)
-                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Reset previous Leases //TODO: Dont do this");
+                Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Reset previous Leases //TODO: Dont do this");
                 leases = new List<string>();
                 Dictionary<string, List<string>> improvQueue = new Dictionary<string, List<string>>();
                 foreach (string key in transactionLeases)
@@ -312,16 +302,14 @@ namespace TransactionManager
                 {
                     Thread functionThread = new Thread(TimerThread);
                     functionThread.Start(improvQueue);
-                    Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Its not my turn yet so I will sleep until it is");
+                    Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Its not my turn yet so I will sleep until it is");
                     lock (state)
                     {
                         Monitor.Wait(state);
                     }
                 }
-                printQueue(" BEFORE REMOVE KEYS QUEUE ");
                 removeFromQueue(reads, keys); // TODO SAME LEASES ON 2 TRANSACTIONS ON SAME TM
-                printQueue(" AFTER REMOVE KEYS QUEUE ");
-                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] It's my turn on the queue so I will do the read and write operations");
+                Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] It's my turn on the queue so I will do the read and write operations");
 
             }
             PermissionRequest permissionRequest = new PermissionRequest();
@@ -335,8 +323,7 @@ namespace TransactionManager
             }
             catch (Exception ex)
             {
-                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] EXCEPTIOOOONEEEEEEEEEESSSSSSS");
-                Console.WriteLine(ex.ToString());
+                Console.WriteLine(SPACE + "(ERROR)[" + state.GetName() + " id: " + transcationId + "] Trying to request permissions to a CRASHED server");
             }
             int permissionNum = 0;
             foreach (Task<PermissionReply> permission in permissionAwaitList)
@@ -351,18 +338,18 @@ namespace TransactionManager
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("MI MADRE ME CHUPPU CONA");
+                    Console.WriteLine(SPACE + "(ERROR)[TM] Waiting for a response that will never come");
                 }
             }
             SubmitReply reply = new SubmitReply();
             if (permissionNum / (permissionAwaitList.Count + 0.0F) <= 0.5)
             {
                 reply.Keys.Add("Abort");
-                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Aborted");
+                Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Aborted");
                 return reply;
             } else
             {
-                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Has the majority doesn't need to abort");
+                Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Has the majority doesn't need to abort");
 
             }
             List<int> lengthsReads = new List<int>();
@@ -381,7 +368,7 @@ namespace TransactionManager
                         results.Add("unknown DadInt");
                     }
                 }
-                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Read operations done with sucess: Build response for the client");
+                Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Read operations done with sucess: Build response for the client");
                 // Write operation
 
                 for (int i = 0; i < keys.Count; i++)
@@ -389,7 +376,7 @@ namespace TransactionManager
                     lengthsWrites.Add(state.queue[keys[i]].Count);
                     state.SetValue(keys[i], values[i]);
                 }
-                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Write operation done with success: Changed values");
+                Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Write operation done with success: Changed values");
             }
 
             BroadcastMessage message = new BroadcastMessage();
@@ -399,7 +386,7 @@ namespace TransactionManager
             message.Values.AddRange(values);
             message.Reads.AddRange(reads);
             message.Lenghts.AddRange(lengthsWrites.Concat(lengthsReads));
-            Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Broadcast to other tms");
+            Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Broadcast to other tms");
             
             List<Task<BroadcastAck>> broadWaitList = new List<Task<BroadcastAck>>();
             try
@@ -410,11 +397,10 @@ namespace TransactionManager
                 }
             } catch (Exception ex)
             {
-                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] EXCEPTIOOOONEEEEEEEEEESSSSSSS");
-                Console.WriteLine(ex.ToString());
+                Console.WriteLine(SPACE + "(ERROR)[" + state.GetName() + " id: " + transcationId + "] Trying to broadcast to a CRASHED TM");
             }
             
-            Console.WriteLine("[TM] Broadcasted request for another TMs in order to replicate the state");
+            Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Broadcasted request for another TMs in order to replicate the state");
             reply.Keys.AddRange(reads);
             reply.Values.AddRange(results);
             return reply;

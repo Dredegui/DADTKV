@@ -38,7 +38,7 @@ namespace Client
             string replyToString = "";
             for (int i = 0; i < reply.Keys.Count; i++)
             {
-                replyToString += "[CLI RESULTS] " + reply.Keys[i] + ": " + reply.Values[i] + " |\n";
+                replyToString += SPACE + "[CLI RESULTS] " + reply.Keys[i] + ": " + reply.Values[i] + " |\n";
 
             }
             Console.WriteLine(SPACE + "[CLI] Received a transaction response with sucess:\n" + replyToString);
