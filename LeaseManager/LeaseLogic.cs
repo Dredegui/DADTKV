@@ -151,7 +151,7 @@ namespace LeaseManager
             }
         }
 
-        public async void Loop(List<int> rounds_of_failure, List<List<int>> failures_per_round,List<int> idOrder, List<string> all_servers,List<List<int>> suspects_per_round,int YOUR_ID,Server server,List<string> all_names) 
+        public async void Loop(List<int> rounds_of_failure, List<List<int>> failures_per_round,List<int> idOrder, List<string> all_servers,List<List<int>> suspects_per_round,int YOUR_ID,Server server,List<string> all_names,int port) 
         {
             int i = 1;
             int crash_count = 0;
@@ -180,9 +180,10 @@ namespace LeaseManager
                         // TODO : MANDAR ABAIXO O SERVIDOR COM O SEU ID
                         if (el < num_servers)
                         {
-                            if (el == YOUR_ID)
+                            
+                            if ("http://localhost:" + port == all_servers[idOrder[el]])
                             {
-                                Console.WriteLine("[LM] Crashing Transaction manager server... my host is: " + all_servers[idOrder[el]]);
+                                Console.WriteLine(">>>>>>>>>>>>>>>>>>>>>>>> [LM] Crashing Transaction manager server... my host is: " + all_servers[idOrder[el]]);
                                 server.ShutdownAsync().Wait();
                                 return;
                             }
@@ -190,10 +191,10 @@ namespace LeaseManager
                         }
                         else
                         {
-                            
-                            if (0 == YOUR_ID)
+
+                            if ("http://localhost:" + port == all_servers[idOrder[el]])
                             {
-                                Console.WriteLine("[LM] Crashing Transaction manager server... my host is: " + all_servers[idOrder[0]]);
+                                Console.WriteLine(">>>>>>>>>>>>>>>>>>> [LM] Crashing Transaction manager server... my host is: " + all_servers[idOrder[0]]);
                                 server.ShutdownAsync().Wait();
                                 return;
                             }

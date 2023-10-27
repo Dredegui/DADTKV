@@ -200,7 +200,7 @@ namespace TransactionManager
                         // TODO : CODE FOR THE CRASH
                         if (el < num_lm + num_tm)
                         {
-                            if (el == YOUR_ID)
+                            if ("http://localhost:" + port == all_servers[idOrder[el]])
                             {
                                 Console.WriteLine("[TM] Crashing Transaction manager server... my host is: " + all_servers[idOrder[el]]);
                                 server.ShutdownAsync().Wait();
@@ -210,7 +210,7 @@ namespace TransactionManager
                         else
                         {
                             Console.WriteLine("[TM TODO CRASH HERE] " + all_servers[idOrder[0]]);
-                            if (0 == YOUR_ID)
+                            if ("http://localhost:" + port == all_servers[idOrder[el]])
                             {
                                 Console.WriteLine("[TM] Crashing Transaction manager server... my host is: " + all_servers[idOrder[0]]);
                                 server.ShutdownAsync().Wait();

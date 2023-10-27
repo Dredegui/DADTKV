@@ -206,7 +206,7 @@ namespace LeaseManager
             Console.WriteLine(startupMessage);
             //Configuring HTTP for client connections in Register method
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            leaseLogic.Loop(rounds_of_failure,failures_per_round,idOrder,all_servers,suspects_per_round,YOUR_ID,server,all_names);
+            leaseLogic.Loop(rounds_of_failure,failures_per_round,idOrder,all_servers,suspects_per_round,YOUR_ID,server,all_names,port);
 
             // async void Loop(List<int> rounds_of_failure, List<List<int>> failures_per_round,List<int> idOrder, List<int> all_servers) 
         }
