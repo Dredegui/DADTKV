@@ -21,5 +21,4 @@ message StatusRequest {
 }
 
 message StatusReply {
-	bool state = 1;
 }

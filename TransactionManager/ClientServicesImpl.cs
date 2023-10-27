@@ -31,9 +31,47 @@ namespace TransactionManager
             this.types = types;
         }
 
+        public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(StatusImpl(request));
+        }
+        public StatusReply StatusImpl(StatusRequest request)
+        {
+            Console.WriteLine(SPACE + "[" + state.GetName() + "] Status Result: Host and port: " + state.hostport + " Current Epoch: " + state.epoch);
+            StatusLMRequest statusLMRequest = new StatusLMRequest();
+            foreach (LearnServices.LearnServicesClient stub in stubsLM.Values)
+            {
+                try
+                {
+                    Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Pinging status to LM");
+                    stub.StatusLM(statusLMRequest);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(SPACE + "(ERROR)[" + state.GetName() + " id: " + transcationId + "] Trying to ping status to a LM that is CRASHED");
+                }
+            }
+            StatusTMRequest statusTMRequest = new StatusTMRequest();
+            foreach (string stubName in stubsTM.Keys)
+            {
+                try
+                {
+                    stubsTM[stubName].StatusTM(statusTMRequest);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(SPACE + "(ERROR)[" + state.GetName() + " id: " + transcationId + "] Trying to ping status to a TM that is CRASHED");
+                }
+            }
+            
+            StatusReply reply = new StatusReply ();
+            return reply;
+        }
+
+
         public override Task<SubmitReply> Submit(SubmitRequest request, ServerCallContext context)
         {
-            return TxSubmit(request);
+            return SubmitImpl(request);
         }
 
         public void registerStubs()
@@ -64,7 +102,6 @@ namespace TransactionManager
 
         public bool checkQueue(List<string> reads, List<string> keys)
         {
-            Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + "] CHECK QUEUE");
             foreach (string read in reads)
             {
                 if (state.queue[read][0] != state.GetName())
@@ -80,7 +117,6 @@ namespace TransactionManager
                     return false;
                 }
             }
-            Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + "] END CHECK QUEUE");
             return true;
         }
 
@@ -99,7 +135,6 @@ namespace TransactionManager
 
         public bool removeFromQueue(List<string> reads, List<string> keys)
         {
-            Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + "] REMOVING READS");
             foreach (string read in reads)
             {
                 state.queue[read].RemoveAt(0);
@@ -108,7 +143,6 @@ namespace TransactionManager
                     leases.Add(read);
                 }
             }
-            Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + "] REMOVING WRITES");
             foreach (string key in keys)
             {
                 if (state.queue[key][0] == state.GetName())
@@ -120,7 +154,6 @@ namespace TransactionManager
                     }
                 }
             }
-            Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + "] END REMOVE");
             return true;
         }
 
@@ -234,7 +267,7 @@ namespace TransactionManager
             }
         }
 
-        public async Task<SubmitReply> TxSubmit(SubmitRequest request)
+        public async Task<SubmitReply> SubmitImpl(SubmitRequest request)
         {
             transcationId = state.transId;
             state.transId = transcationId + 1;
@@ -285,7 +318,7 @@ namespace TransactionManager
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("(ERROR)[TM] Trying to wait for an LM that is CRASHED");
+                        Console.WriteLine(SPACE + "(ERROR)[" + state.GetName() + " id: " + transcationId + "] Trying to wait for an LM that is CRASHED");
                     }
                 }
                 Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Waited for learn ACKS");
@@ -319,7 +352,6 @@ namespace TransactionManager
                     lock (state)
                     {
                         Monitor.Wait(state);
-                        Console.WriteLine(SPACE + "[" + state.GetName() + transcationId + "] WOKE UPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP");
                     }
                 }
                 removeFromQueue(reads, keys); // TODO SAME LEASES ON 2 TRANSACTIONS ON SAME TM
@@ -339,7 +371,7 @@ namespace TransactionManager
                     }
                     else
                     {
-                        Console.WriteLine("[" + state.GetName() + "] Ignores because it suspects " + stubName);
+                        Console.WriteLine(SPACE + "[" + state.GetName() + "] Ignores because it suspects " + stubName);
                     }
                 }
             }
@@ -364,7 +396,7 @@ namespace TransactionManager
                 }
             }
             SubmitReply reply = new SubmitReply();
-            if (permissionNum / (permissionAwaitList.Count + 0.0F) <= 0.5)
+            if (permissionAwaitList.Count != 0 && permissionNum / (permissionAwaitList.Count + 0.00F) <= 0.5)
             {
                 reply.Keys.Add("Abort");
                 Console.WriteLine(SPACE + "[" + state.GetName() + " id: " + transcationId + "] Aborted");

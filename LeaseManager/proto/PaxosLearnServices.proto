@@ -2,6 +2,7 @@ syntax = "proto3";
 
 service LearnServices {
 	rpc Learn(LearnRequest ) returns (LearnReply);
+	rpc StatusLM(StatusLMRequest) returns (StatusLMReply);
 }
 
 message LearnRequest {
@@ -10,4 +11,10 @@ message LearnRequest {
 }
 
 message LearnReply{
+}
+
+message StatusLMRequest {
+}
+
+message StatusLMReply {
 }

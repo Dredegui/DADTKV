@@ -111,7 +111,8 @@ namespace Client
         }
         private void CheckStatus()
         {
-            Console.WriteLine(SPACE + "[CLI] Checking status is on our TODO list");
+            Console.WriteLine(SPACE + "[CLI] Status: name: " + client.name);
+            client.Status();
         }
         public void Loop()
         {

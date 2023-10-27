@@ -17,6 +17,20 @@ namespace TransactionManager
             this.state = state;
         }
 
+        public override Task<StatusTMReply> StatusTM(StatusTMRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(StatusTMImpl(request));
+        }
+        public StatusTMReply StatusTMImpl(StatusTMRequest request)
+        {
+            Console.WriteLine(SPACE + "[" + state.GetName() + "] Status Result: Host and port: " + state.hostport + " Current Epoch: " + state.epoch);
+            StatusTMReply reply = new StatusTMReply();
+            return reply;
+        }
+        
+
+
+
         public override Task<PermissionReply> ReceivePermission(PermissionRequest request, ServerCallContext context)
         {
             return Task.FromResult(ReceivePermissionImpl(request));

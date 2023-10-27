@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LeaseManager", "LeaseManage
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Client", "Client\Client.csproj", "{A04B4106-6BDA-47C4-BC42-F37E3A998108}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransactionManager", "TransactionManager\TransactionManager.csproj", "{FB18B67C-83A5-4139-84D6-716D1DB825DB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TransactionManager", "TransactionManager\TransactionManager.csproj", "{FB18B67C-83A5-4139-84D6-716D1DB825DB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConfigScript", "ConfigScript\ConfigScript.csproj", "{2AFD55B6-FBE4-42C5-A4DB-981F05430DD0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConfigScript", "ConfigScript\ConfigScript.csproj", "{2AFD55B6-FBE4-42C5-A4DB-981F05430DD0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

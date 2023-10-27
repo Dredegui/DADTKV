@@ -4,7 +4,15 @@ service BroadcastServices {
 	rpc Broadcast(BroadcastMessage) returns (BroadcastAck);
 	rpc ReceivePermission(PermissionRequest) returns (PermissionReply);
 	rpc LeaseUpdate(LeaseUpdateRequest) returns (LeaseUpdateReply);
+	rpc StatusTM(StatusTMRequest) returns (StatusTMReply);
 }
+
+message StatusTMRequest {
+}
+
+message StatusTMReply {
+}
+
 
 message BroadcastMessage {
 	string name = 1;

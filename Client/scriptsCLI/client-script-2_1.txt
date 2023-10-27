@@ -15,8 +15,5 @@
 T ("D") (<"B",10>,<"C",20>)
 # wait command (in milliseconds)
 W 5000
-# A status request from all the processes in the system
-# is issued via a S command
-S
 W 5000
 T ("A","B","C") ()

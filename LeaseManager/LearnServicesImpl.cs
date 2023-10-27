@@ -14,6 +14,17 @@ namespace LeaseManager
             this.state = state;
         }
 
+        public override Task<StatusLMReply> StatusLM(StatusLMRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(StatusLMImpl(request));
+        }
+        public StatusLMReply StatusLMImpl(StatusLMRequest request)
+        {
+            Console.WriteLine("[LM] Status Result: Host and port: " + state.hostport + " Current Epoch: " + state.GetEpoch());
+            StatusLMReply reply = new StatusLMReply();
+            return reply;
+        }
+
         public override Task<LearnReply> Learn(LearnRequest request, ServerCallContext context)
         {
             return Task.FromResult(LearnImpl(request));
