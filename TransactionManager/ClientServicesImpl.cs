@@ -83,7 +83,20 @@ namespace TransactionManager
 
             return true;
         }
-        
+
+
+        public bool checkMyLeases(List<string> leases)
+        {
+            foreach (string lease in leases)
+            {
+                if (!state.queue[lease].Contains(state.GetName()))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         public bool removeFromQueue(List<string> reads, List<string> keys)
         {
             foreach (string read in reads)
@@ -110,27 +123,18 @@ namespace TransactionManager
             return true;
         }
 
-        private async void TimerThread(Object transLeases)
+        private async void TimerThread(Object queue)
         {
-            List<string> transactionLeases = (List<string>)transLeases;
-            Console.WriteLine("[" + state.GetName() + " TIMER] STARTED");
-            Dictionary<string, List<string>> shallowCopy = new Dictionary<string, List<string>>();
-            foreach (string key in state.queue.Keys)
-            {
-                shallowCopy[key] = new List<string>();
-                foreach (string value in state.queue[key])
-                {
-                    shallowCopy[key].Add(value);
-                }
-                
-            }
-            foreach (string ls in transactionLeases)
+            Console.WriteLine("[" + state.GetName() + transcationId + " TIMER] STARTED");
+            Dictionary<string, List<string>> shallowCopy = (Dictionary<string, List<string>>)queue;
+            
+            foreach (string ls in shallowCopy.Keys)
             {
                 Console.WriteLine(ls);
                 Console.WriteLine(shallowCopy[ls].Count);
             }
             // Simulate some work in the function thread.
-            Thread.Sleep(500);
+            Thread.Sleep(100);
             bool diff = false;
             LeaseUpdateRequest request = new LeaseUpdateRequest();
             foreach (string key in shallowCopy.Keys)
@@ -141,21 +145,21 @@ namespace TransactionManager
                     diff = true;
                 }
             }
-            foreach (string lease in transactionLeases)
+            foreach (string lease in shallowCopy.Keys)
             {
                 request.Leases.Add(lease);
                 request.Lenghts.Add(shallowCopy[lease].Count);
             }
             if (!diff)
             {
-                Console.WriteLine("[" + state.GetName() + " TIMER] Timer handling started");
+                Console.WriteLine("[" + state.GetName() + transcationId + " TIMER] Timer handling started");
                 // Broadcast leases to see if there is an invalid tm
                 List<Task<LeaseUpdateReply>> updateAwaitList = new List<Task<LeaseUpdateReply>>();
                 foreach (BroadcastServices.BroadcastServicesClient stub in stubsTM.Values)
                 {
                     updateAwaitList.Add(stub.LeaseUpdateAsync(request).ResponseAsync);
                 }
-                Console.WriteLine("[" + state.GetName() + "] Waiting for every TM to respond");
+                Console.WriteLine("[" + state.GetName() + transcationId + "] Waiting for every TM to respond");
                 Task<LeaseUpdateReply[]> waitUpdate = Task.WhenAll(updateAwaitList);
                 await waitUpdate;
                 LeaseUpdateReply[] updateResults = waitUpdate.Result;
@@ -189,7 +193,7 @@ namespace TransactionManager
             }
             else
             {
-                Console.WriteLine("[" + state.GetName() + " TIMER] Already received transaction broadcast");
+                Console.WriteLine("[" + state.GetName() + transcationId + " TIMER] Already received transaction broadcast");
             }
             
         }
@@ -204,18 +208,20 @@ namespace TransactionManager
                 {
                     vals += val + ", ";
                 }
-                Console.WriteLine("[" + state.GetName() + "]" + pos + "key: " + key + "| list: " + vals);
+                Console.WriteLine("[" + state.GetName() + transcationId + "]" + pos + "key: " + key + "| list: " + vals);
             }
         }
 
         public async Task<SubmitReply> TxSubmit(SubmitRequest request)
         {
-            Console.WriteLine("[" + state.GetName() + "] Start a submit request");
+            transcationId = state.transId;
+            state.transId = transcationId + 1;
+            Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Start a submit request");
             if (counter == 0)
             {
                 Console.WriteLine("");
                 this.registerStubs();
-                Console.WriteLine("[" + state.GetName() + "] Registed stubs for another TM and LM");
+                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Registed stubs for another TM and LM");
                 counter++;
             }
             
@@ -227,37 +233,47 @@ namespace TransactionManager
             List<string> transactionLeases = reads.Concat(keys).Distinct().ToList();
             if (!checkLeases(reads, keys))
             { 
-                Console.WriteLine("[" + state.GetName() + "] Dont have the Lease for the request of the client => Build new request for LM");
+                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Dont have the Lease for the request of the client => Build new request for LM");
                 LearnRequest learnRequest = new LearnRequest();
                 learnRequest.Tm = state.GetName();
                 learnRequest.Leases.AddRange(transactionLeases);
                 List<Task<LearnReply>> learnAwaitList = new List<Task<LearnReply>>();
                 foreach (LearnServices.LearnServicesClient stub in stubsLM.Values)
                 {
-                    Console.WriteLine("[" + state.GetName() + "]         >>>> Sendind request for a LM");
+                    Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "]         >>>> Sendind request for a LM");
                     learnAwaitList.Add(stub.LearnAsync(learnRequest).ResponseAsync);
                 }
-                Console.WriteLine("[" + state.GetName() + "] Waiting for every LM to respond");
+                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Waiting for every LM to respond");
                 Task<LearnReply[]> waitTask = Task.WhenAll(learnAwaitList);
                 await waitTask;
-                Console.WriteLine("[" + state.GetName() + "] Waited for learn ACKS");
+                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Waited for learn ACKS");
                 LearnReply[] learnResults = waitTask.Result;
                 // Wait for lease inform broadcast
                 lock (state)
                 {
-                    Monitor.Wait(state);
+                    do
+                    {
+                        Monitor.Wait(state);
+                        Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] INNN DO WHILEEEEEEEEEEEEEEEEEEEEE");
+                    } while (!checkMyLeases(transactionLeases));
                 }
                 // save our leases TODO Ver com stor (libertar sempre)
-                Console.WriteLine("[" + state.GetName() + "] Reset previous Leases //TODO: Dont do this");
+                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Reset previous Leases //TODO: Dont do this");
                 leases = new List<string>();
-
-                Console.WriteLine("[" + state.GetName() + "] Building the queue to respect LMs");
-                
+                Dictionary<string, List<string>> improvQueue = new Dictionary<string, List<string>>();
+                foreach (string key in transactionLeases)
+                {
+                    improvQueue[key] = new List<string>();
+                    foreach (string value in state.queue[key])
+                    {
+                        improvQueue[key].Add(value);
+                    }
+                }
                 while (!checkQueue(reads, keys))
                 {
                     Thread functionThread = new Thread(TimerThread);
-                    functionThread.Start(transactionLeases);
-                    Console.WriteLine("[" + state.GetName() + "] Its not my turn yet so I will sleep until it is");
+                    functionThread.Start(improvQueue);
+                    Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Its not my turn yet so I will sleep until it is");
                     lock (state)
                     {
                         Monitor.Wait(state);
@@ -266,7 +282,7 @@ namespace TransactionManager
                 printQueue(" BEFORE REMOVE KEYS QUEUE ");
                 removeFromQueue(reads, keys); // TODO SAME LEASES ON 2 TRANSACTIONS ON SAME TM
                 printQueue(" AFTER REMOVE KEYS QUEUE ");
-                Console.WriteLine("[" + state.GetName() + "] It's my turn on the queue so I will do the read and write operations");
+                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] It's my turn on the queue so I will do the read and write operations");
 
             }
             List<int> lengthsReads = new List<int>();
@@ -285,7 +301,7 @@ namespace TransactionManager
                         results.Add("unknown DadInt");
                     }
                 }
-                Console.WriteLine("[" + state.GetName() + "] Read operations done with sucess: Build response for the client");
+                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Read operations done with sucess: Build response for the client");
                 // Write operation
 
                 for (int i = 0; i < keys.Count; i++)
@@ -293,7 +309,7 @@ namespace TransactionManager
                     lengthsWrites.Add(state.queue[keys[i]].Count);
                     state.SetValue(keys[i], values[i]);
                 }
-                Console.WriteLine("[" + state.GetName() + "] Write operation done with success: Changed values");
+                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Write operation done with success: Changed values");
             }
 
             
@@ -304,13 +320,14 @@ namespace TransactionManager
             message.Values.AddRange(values);
             message.Reads.AddRange(reads);
             message.Lenghts.AddRange(lengthsWrites.Concat(lengthsReads));
-            transcationId++;
-            Console.WriteLine("[" + state.GetName() + "] Broadcast to other tms");
+            Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Broadcast to other tms");
+            List<Task<BroadcastAck>> broadWaitList = new List<Task<BroadcastAck>>();
             foreach (var stub in stubsTM.Values)
             {
-
-                stub.BroadcastAsync(message); // TODO save async calls and wait for them
+                broadWaitList.Add(stub.BroadcastAsync(message).ResponseAsync); // TODO save async calls and wait for them
             }
+            Task<BroadcastAck[]> broadWait = Task.WhenAll(broadWaitList);
+            await broadWait;
             Console.WriteLine("[TM] Broadcasted request for another TMs in order to replicate the state");
             SubmitReply reply = new SubmitReply();
             reply.Keys.AddRange(reads);

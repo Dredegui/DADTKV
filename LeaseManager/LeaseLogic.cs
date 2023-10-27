@@ -61,6 +61,8 @@ namespace LeaseManager
             replyRequest.ProposedRound = currentEpoch;
             int counter = 0;
             List<Task<PrepareReply>> replyAwaitList = new List<Task<PrepareReply>>();
+            List<LeaseTransaction> commitedOrder = new List<LeaseTransaction>(state.GetProposedLeases());
+            state.ClearProposed();
             foreach (string name in stubsLM.Keys)
             {
                 Console.WriteLine("[LM LEADER] Sending async PREPARE REQUESTS for every LM " + name);
@@ -91,7 +93,6 @@ namespace LeaseManager
                 // Build request
                 AcceptRequest acceptRequest = new AcceptRequest();
                 acceptRequest.ProposedRound = currentEpoch;
-                List<LeaseTransaction> commitedOrder = state.GetProposedLeases();
                 Console.WriteLine("[LM LEADER] Building the accepted list for other LMs");
                 foreach (LeaseTransaction lt in commitedOrder)
                 {
@@ -136,7 +137,6 @@ namespace LeaseManager
                         {
                             stub.CommitAsync(request);
                         }
-                        state.ClearProposed();
                     }
                 }
                 else
