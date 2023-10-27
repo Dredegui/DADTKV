@@ -33,7 +33,14 @@ namespace Client
             request.Reads.AddRange(reads);
             request.Keys.AddRange(keys);
             request.Values.AddRange(values);
-            SubmitReply reply = stub.Submit(request);
+            SubmitReply reply = null;
+            try { 
+                reply = stub.Submit(request);
+            } catch (Exception ex)
+            {
+                Console.WriteLine("[CLI] EXCEPTIONELGAYS");
+                Console.WriteLine(ex.ToString());
+            }
             string replyToString = "";
             for (int i = 0; i < reply.Keys.Count; i++)
             {

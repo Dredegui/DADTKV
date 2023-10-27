@@ -38,9 +38,16 @@ namespace LeaseManager
                 request.Values.Add(interRequest);
             }
             // broadcast consensus to tm's
-            foreach (LeaseInformServices.LeaseInformServicesClient stub in state.stubsTM.Values)
+            try
             {
-                stub.BroadcastInformAsync(request);
+                foreach (LeaseInformServices.LeaseInformServicesClient stub in state.stubsTM.Values)
+                {
+                    stub.BroadcastInformAsync(request);
+                }
+            } catch (Exception ex)
+            {
+                Console.WriteLine("[LM LEARNER] EXCEPTIONALLAESESESESES");
+                Console.WriteLine(ex.ToString());
             }
             CommitReply reply = new CommitReply();
             return reply;

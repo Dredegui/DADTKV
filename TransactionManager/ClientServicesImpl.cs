@@ -155,14 +155,32 @@ namespace TransactionManager
                 Console.WriteLine("[" + state.GetName() + transcationId + " TIMER] Timer handling started");
                 // Broadcast leases to see if there is an invalid tm
                 List<Task<LeaseUpdateReply>> updateAwaitList = new List<Task<LeaseUpdateReply>>();
-                foreach (BroadcastServices.BroadcastServicesClient stub in stubsTM.Values)
+                try
                 {
-                    updateAwaitList.Add(stub.LeaseUpdateAsync(request).ResponseAsync);
+                    foreach (BroadcastServices.BroadcastServicesClient stub in stubsTM.Values)
+                    {
+                        updateAwaitList.Add(stub.LeaseUpdateAsync(request).ResponseAsync);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] EXCEPTIONESSSSSSSSSSSSSSSSSSSSSSSSSS");
+                    Console.WriteLine(ex.ToString());
                 }
                 Console.WriteLine("[" + state.GetName() + transcationId + "] Waiting for every TM to respond");
-                Task<LeaseUpdateReply[]> waitUpdate = Task.WhenAll(updateAwaitList);
-                await waitUpdate;
-                LeaseUpdateReply[] updateResults = waitUpdate.Result;
+                List<LeaseUpdateReply> updateResults = new List<LeaseUpdateReply>();
+                foreach (Task<LeaseUpdateReply> update in updateAwaitList)
+                {
+                    try
+                    {
+                        await update;
+                        updateResults.Add(update.Result);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("MI MADRE ME CHUPPU CONA");
+                    }
+                }
                 bool removeLease = true;
                 foreach (LeaseUpdateReply update in updateResults)
                 {
@@ -185,6 +203,7 @@ namespace TransactionManager
                         state.queue[lease].RemoveAt(0);
                     }
                 }
+                
                 // The function thread can pulse and wake up the main thread.
                 lock (state)
                 {
@@ -238,16 +257,35 @@ namespace TransactionManager
                 learnRequest.Tm = state.GetName();
                 learnRequest.Leases.AddRange(transactionLeases);
                 List<Task<LearnReply>> learnAwaitList = new List<Task<LearnReply>>();
-                foreach (LearnServices.LearnServicesClient stub in stubsLM.Values)
+                try
                 {
-                    Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "]         >>>> Sendind request for a LM");
-                    learnAwaitList.Add(stub.LearnAsync(learnRequest).ResponseAsync);
+                    foreach (LearnServices.LearnServicesClient stub in stubsLM.Values)
+                    {
+                        Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "]         >>>> Sendind request for a LM");
+                        learnAwaitList.Add(stub.LearnAsync(learnRequest).ResponseAsync);
+                    }
+                } catch (Exception ex)
+                {
+                    Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] EXCEPTIONESSSSSSSSSSSSSSSSSSSSSSSSSS");
+                    Console.WriteLine(ex.ToString());
                 }
                 Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Waiting for every LM to respond");
-                Task<LearnReply[]> waitTask = Task.WhenAll(learnAwaitList);
-                await waitTask;
+                List<LearnReply> learnResults = new List<LearnReply>();
+                foreach (Task<LearnReply> learn in learnAwaitList)
+                {
+                    try
+                    {
+                        await learn;
+                        learnResults.Add(learn.Result);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("MI MADRE ME CHUPPU CONA");
+                    }
+                }
                 Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Waited for learn ACKS");
-                LearnReply[] learnResults = waitTask.Result;
+                
+                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] NUMBER OF ACKS: " + learnResults.Count);
                 // Wait for lease inform broadcast
                 lock (state)
                 {
@@ -321,13 +359,21 @@ namespace TransactionManager
             message.Reads.AddRange(reads);
             message.Lenghts.AddRange(lengthsWrites.Concat(lengthsReads));
             Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Broadcast to other tms");
+            //Task<BroadcastAck[]> broadWait = Task.WhenAll(broadWaitList);
+            //await broadWait;
             List<Task<BroadcastAck>> broadWaitList = new List<Task<BroadcastAck>>();
-            foreach (var stub in stubsTM.Values)
+            try
             {
-                broadWaitList.Add(stub.BroadcastAsync(message).ResponseAsync); // TODO save async calls and wait for them
+                foreach (var stub in stubsTM.Values)
+                {
+                    broadWaitList.Add(stub.BroadcastAsync(message).ResponseAsync);
+                }
+            } catch (Exception ex)
+            {
+                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] EXCEPTIOOOONEEEEEEEEEESSSSSSS");
+                Console.WriteLine(ex.ToString());
             }
-            Task<BroadcastAck[]> broadWait = Task.WhenAll(broadWaitList);
-            await broadWait;
+            
             Console.WriteLine("[TM] Broadcasted request for another TMs in order to replicate the state");
             SubmitReply reply = new SubmitReply();
             reply.Keys.AddRange(reads);
