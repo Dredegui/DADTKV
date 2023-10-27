@@ -15,6 +15,8 @@ namespace LeaseManager
         private List<LeaseTransaction> currentLeases = new List<LeaseTransaction>();
         private List<LeaseTransaction> proposedLeases = new List<LeaseTransaction>();
         public Dictionary<string, LeaseInformServices.LeaseInformServicesClient> stubsTM = new Dictionary<string, LeaseInformServices.LeaseInformServicesClient>();
+        public List<string> suspectList = new List<string>();
+
         public LeaseState()
         {
         }
@@ -69,5 +71,16 @@ namespace LeaseManager
         {
             proposedLeases.Clear();
         }
+
+        public void addSuspect(string suspect)
+        {
+            suspectList.Add(suspect);
+        }
+
+        public void newFailureRound()
+        {
+            suspectList.Clear();
+        }
+
     }
 }

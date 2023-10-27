@@ -238,7 +238,6 @@ namespace TransactionManager
                         if (idOrder[oq_suspeita] == YOUR_ID)
                         {
                             serverState.addSuspect(all_names[idOrder[o_suspeito]]);
-                            Console.WriteLine("?????????????????????????????????????????? SOU O" + all_servers[idOrder[oq_suspeita]]  + "OH MALTINHA, TOU AQUI A SUSPEITAR DESTE GAJO: " + all_names[idOrder[o_suspeito]]);
                         }
 
                     }

@@ -151,7 +151,7 @@ namespace LeaseManager
             }
         }
 
-        public async void Loop(List<int> rounds_of_failure, List<List<int>> failures_per_round,List<int> idOrder, List<string> all_servers,List<List<int>> suspects_per_round) 
+        public async void Loop(List<int> rounds_of_failure, List<List<int>> failures_per_round,List<int> idOrder, List<string> all_servers,List<List<int>> suspects_per_round,int YOUR_ID,Server server,List<string> all_names) 
         {
             int i = 1;
             int crash_count = 0;
@@ -180,11 +180,24 @@ namespace LeaseManager
                         // TODO : MANDAR ABAIXO O SERVIDOR COM O SEU ID
                         if (el < num_servers)
                         {
-                            Console.WriteLine("[LM TODO CRASH HERE] " + all_servers[idOrder[el]]);
+                            if (el == YOUR_ID)
+                            {
+                                Console.WriteLine("[LM] Crashing Transaction manager server... my host is: " + all_servers[idOrder[el]]);
+                                server.ShutdownAsync().Wait();
+                                return;
+                            }
+
                         }
                         else
                         {
-                            Console.WriteLine("[LM TODO CRASH HERE] " + all_servers[idOrder[0]]);
+                            
+                            if (0 == YOUR_ID)
+                            {
+                                Console.WriteLine("[LM] Crashing Transaction manager server... my host is: " + all_servers[idOrder[0]]);
+                                server.ShutdownAsync().Wait();
+                                return;
+                            }
+
                         }
 
                     }
@@ -206,10 +219,35 @@ namespace LeaseManager
                         Console.WriteLine("[O SUSPEITO TUM TUM TUM]: " + all_servers[idOrder[o_suspeito]]);
                     }
 
+                    // CHECK SUSPECTS
+                    for (int k = 0; k < suspects_per_round[crash_count].Count; k += 2)
+                    {
+                        int oq_suspeita = suspects_per_round[crash_count][k] + 1;
+                        int o_suspeito = suspects_per_round[crash_count][k + 1] + 1;
+                        if (oq_suspeita >= num_servers)
+                        {
+                            oq_suspeita = 0;
+                        }
+                        if (o_suspeito >= num_servers)
+                        {
+                            o_suspeito = 0;
+                        }
+                        // A -> B
+                        //Console.WriteLine("[OQ SUSPEITA TAM TAM TAM DO LADO DA FUCKING TM]: " + all_servers[idOrder[oq_suspeita]]);
+                        //Console.WriteLine("[O SUSPEITO TUM TUM TUM DO LADO DA FUCKING TM]: " + all_servers[idOrder[o_suspeito]]);
+                        if (idOrder[oq_suspeita] == YOUR_ID)
+                        {
+                            Console.WriteLine("********************** MALTINHA eu sou o " + all_servers[idOrder[oq_suspeita]] + " e acho que este gajo tá bugadinho: " + all_names[idOrder[o_suspeito]]);
+                            state.addSuspect(all_names[idOrder[o_suspeito]]);
+                        }
+
+                    }
+
+
                     crash_count++;
                 }
 
-
+                Console.WriteLine("ESTE É O MEU ID MEU CARO" + id);
 
                 if (id == 0) {
                     Console.WriteLine("[LM] I am the leader of this: Let's start PAXOS");
