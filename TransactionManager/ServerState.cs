@@ -11,6 +11,9 @@ namespace TransactionManager
         private Dictionary<string, int> DadInts = new Dictionary<string, int>();
         public int transId = 0;
         public Dictionary<string, List<string>> queue = new Dictionary<string, List<string>>();
+
+        public List<string> suspectList = new List<string>();
+
         public int epoch = -1;
 
         private string name;
@@ -36,6 +39,16 @@ namespace TransactionManager
 
         public string GetName() {
             return name;
+        }
+
+        public void addSuspect(string suspect)
+        { 
+            suspectList.Add(suspect);
+        }
+
+        public void newFailureRound()
+        {
+            suspectList.Clear();
         }
 
         public void printState()

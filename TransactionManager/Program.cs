@@ -1,4 +1,5 @@
-﻿using Grpc.Core;
+﻿using System.Runtime.ConstrainedExecution;
+using Grpc.Core;
 
 namespace TransactionManager
 {
@@ -50,9 +51,11 @@ namespace TransactionManager
             int num_lm = Int32.Parse(args[2]);
 
             List<string> all_servers = new List<string>();
+            List<string> all_names = new List<string>();
             List<string> names_lm = new List<string>();
             List<string> urls_lm = new List<string>();
             List<int> types = new List<int>();
+            int YOUR_ID = -1;
             for (int i = 0; i < num_lm; i++)
             {
 
@@ -62,6 +65,7 @@ namespace TransactionManager
                 Console.WriteLine("[TM] connected to another LM: " + "http://localhost:" + port_lm.ToString());
                 types.Add(1);
                 all_servers.Add("http://localhost:" + port_lm.ToString());
+                all_names.Add("lm" + i.ToString());
             }
 
             // Initialize TM he knows about
@@ -78,6 +82,13 @@ namespace TransactionManager
                     urls_tm.Add("http://localhost:" + port_tm.ToString());
                     Console.WriteLine("[TM] connected to another TM: " + "http://localhost:" + port_tm.ToString());
                     types.Add(0);
+                    all_names.Add("tm" + i.ToString());
+                    
+                }
+                else
+                {
+                    YOUR_ID = all_servers.Count;
+                    all_names.Add("me");
                 }
                 all_servers.Add("http://localhost:" + port_tm.ToString());
             }
@@ -148,30 +159,6 @@ namespace TransactionManager
                 f++;
             }
 
-            /*
-            // DEBUG
-            int r = 0;
-            foreach (List<int> l in failures_per_round)
-            {
-                foreach (int i in l)
-                {
-                    Console.WriteLine("[TM MOTHER FUCKER] FALHAS DA RONDA " + r + " : " +  i);
-                }
-                r++;
-            }
-
-            // DEBUG
-            r = 0;
-            foreach (List<int> l in suspects_per_round)
-            {
-                foreach (int i in l)
-                {
-                    Console.WriteLine("[TM MOTHER FUCKER] DESCONFIANÇA DA RONDA " + r + " : " + i);
-                }
-                r++;
-            }
-            */ 
-
             string startupMessage;
             ServerPort serverPort;
 
@@ -205,16 +192,30 @@ namespace TransactionManager
                 Thread.Sleep(time_slot_duration);
                 if (rounds_of_failure.Contains(round_count))
                 {
+
+                    serverState.newFailureRound();
+
                     foreach (int el in failures_per_round[crash_count])
                     {
                         // TODO : CODE FOR THE CRASH
                         if (el < num_lm + num_tm)
                         {
-                            Console.WriteLine("[TM TODO CRASH HERE] " + all_servers[idOrder[el]]);
+                            if (el == YOUR_ID)
+                            {
+                                Console.WriteLine("[TM] Crashing Transaction manager server... my host is: " + all_servers[idOrder[el]]);
+                                server.ShutdownAsync().Wait();
+                                return;
+                            }
                         }
                         else
                         {
                             Console.WriteLine("[TM TODO CRASH HERE] " + all_servers[idOrder[0]]);
+                            if (0 == YOUR_ID)
+                            {
+                                Console.WriteLine("[TM] Crashing Transaction manager server... my host is: " + all_servers[idOrder[0]]);
+                                server.ShutdownAsync().Wait();
+                                return;
+                            }
                         }
                         
                     }
@@ -231,8 +232,15 @@ namespace TransactionManager
                         {
                             o_suspeito = 0;
                         }
-                        Console.WriteLine("[OQ SUSPEITA TAM TAM TAM DO LADO DA FUCKING TM]: " + all_servers[idOrder[oq_suspeita]]);
-                        Console.WriteLine("[O SUSPEITO TUM TUM TUM DO LADO DA FUCKING TM]: " + all_servers[idOrder[o_suspeito]]);
+                        // A -> B
+                        //Console.WriteLine("[OQ SUSPEITA TAM TAM TAM DO LADO DA FUCKING TM]: " + all_servers[idOrder[oq_suspeita]]);
+                        //Console.WriteLine("[O SUSPEITO TUM TUM TUM DO LADO DA FUCKING TM]: " + all_servers[idOrder[o_suspeito]]);
+                        if (idOrder[oq_suspeita] == YOUR_ID)
+                        {
+                            serverState.addSuspect(all_names[idOrder[o_suspeito]]);
+                            Console.WriteLine("?????????????????????????????????????????? SOU O" + all_servers[idOrder[oq_suspeita]]  + "OH MALTINHA, TOU AQUI A SUSPEITAR DESTE GAJO: " + all_names[idOrder[o_suspeito]]);
+                        }
+
                     }
 
                     crash_count++;
