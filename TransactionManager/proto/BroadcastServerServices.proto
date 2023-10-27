@@ -2,6 +2,7 @@ syntax = "proto3";
 
 service BroadcastServices {
 	rpc Broadcast(BroadcastMessage) returns (BroadcastAck);
+	rpc ReceivePermission(PermissionRequest) returns (PermissionReply);
 	rpc LeaseUpdate(LeaseUpdateRequest) returns (LeaseUpdateReply);
 }
 
@@ -15,6 +16,12 @@ message BroadcastMessage {
 }
 
 message BroadcastAck{
+	bool value = 1;
+}
+message PermissionRequest {
+}
+
+message PermissionReply {
 	bool value = 1;
 }
 

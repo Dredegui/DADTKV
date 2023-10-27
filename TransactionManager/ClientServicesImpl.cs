@@ -269,6 +269,7 @@ namespace TransactionManager
                     Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] EXCEPTIONESSSSSSSSSSSSSSSSSSSSSSSSSS");
                     Console.WriteLine(ex.ToString());
                 }
+                
                 Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Waiting for every LM to respond");
                 List<LearnReply> learnResults = new List<LearnReply>();
                 foreach (Task<LearnReply> learn in learnAwaitList)
@@ -323,6 +324,47 @@ namespace TransactionManager
                 Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] It's my turn on the queue so I will do the read and write operations");
 
             }
+            PermissionRequest permissionRequest = new PermissionRequest();
+            List<Task<PermissionReply>> permissionAwaitList = new List<Task<PermissionReply>>();
+            try
+            {
+                foreach (var stub in stubsTM.Values)
+                {
+                    permissionAwaitList.Add(stub.ReceivePermissionAsync(permissionRequest).ResponseAsync);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] EXCEPTIOOOONEEEEEEEEEESSSSSSS");
+                Console.WriteLine(ex.ToString());
+            }
+            int permissionNum = 0;
+            foreach (Task<PermissionReply> permission in permissionAwaitList)
+            {
+                try
+                {
+                    await permission;
+                    if (permission.Result.Value)
+                    {
+                        permissionNum++;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("MI MADRE ME CHUPPU CONA");
+                }
+            }
+            SubmitReply reply = new SubmitReply();
+            if (permissionNum / (permissionAwaitList.Count + 0.0F) <= 0.5)
+            {
+                reply.Keys.Add("Abort");
+                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Aborted");
+                return reply;
+            } else
+            {
+                Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Has the majority doesn't need to abort");
+
+            }
             List<int> lengthsReads = new List<int>();
             List<int> lengthsWrites = new List<int>();
             lock (state)
@@ -350,7 +392,6 @@ namespace TransactionManager
                 Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Write operation done with success: Changed values");
             }
 
-            
             BroadcastMessage message = new BroadcastMessage();
             message.Id = transcationId;
             message.Name = state.GetName();
@@ -359,8 +400,7 @@ namespace TransactionManager
             message.Reads.AddRange(reads);
             message.Lenghts.AddRange(lengthsWrites.Concat(lengthsReads));
             Console.WriteLine("[" + state.GetName() + " id: " + transcationId + "] Broadcast to other tms");
-            //Task<BroadcastAck[]> broadWait = Task.WhenAll(broadWaitList);
-            //await broadWait;
+            
             List<Task<BroadcastAck>> broadWaitList = new List<Task<BroadcastAck>>();
             try
             {
@@ -375,7 +415,6 @@ namespace TransactionManager
             }
             
             Console.WriteLine("[TM] Broadcasted request for another TMs in order to replicate the state");
-            SubmitReply reply = new SubmitReply();
             reply.Keys.AddRange(reads);
             reply.Values.AddRange(results);
             return reply;

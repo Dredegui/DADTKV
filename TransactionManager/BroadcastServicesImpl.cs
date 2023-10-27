@@ -17,6 +17,18 @@ namespace TransactionManager
             this.state = state;
         }
 
+        public override Task<PermissionReply> ReceivePermission(PermissionRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(ReceivePermissionImpl(request));
+        }
+
+        public PermissionReply ReceivePermissionImpl(PermissionRequest request)
+        {
+            PermissionReply reply = new PermissionReply();
+            reply.Value = true;
+            return reply;
+        }
+
         public override Task<BroadcastAck> Broadcast(BroadcastMessage message, ServerCallContext context) {
             return Task.FromResult(BroadcastImpl(message));
         }
